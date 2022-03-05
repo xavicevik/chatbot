@@ -8,7 +8,14 @@ admin.site.register(Estados)
 admin.site.register(TiposDocumento)
 admin.site.register(TiposVehiculo)
 admin.site.register(Empresas)
-admin.site.register(EmpresaUsuario)
+#admin.site.register(EmpresaUsuario)
+
+class EmpresaUsuarioAdmin(admin.ModelAdmin):
+    list_display = ('usuario', 'empresa')
+    list_filter = ('empresa', 'usuario')
+    search_fields = ('usuario','empresa')
+    list_per_page = 10
+
 
 class ReferidoAdmin(admin.ModelAdmin):
     list_display = ('id', 'nombre', 'apellido', 'documento', 'telefono', 'estado')
@@ -40,6 +47,6 @@ class ConvenioAdmin(admin.ModelAdmin):
 
 #admin.site.register(Referidos, ReferidoAdmin)
 admin.site.register(Conveniocda, ConvenioAdmin)
-
+admin.site.register(EmpresaUsuario, EmpresaUsuarioAdmin)
 admin.site.site_header = "Convenios CDA Admin"
 admin.site.site_title = "Convenios CDA titulo"
