@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="shortcut icon" href="http://nubecolectiva.com/favicon.ico" />
+
+    <meta name="theme-color" content="#000000" />
+
+    <title>Pruebas de x</title>
+
+    {# Cargamos la librería #}
+    {% load bootstrap4 %}
+
+    {# CSS Bootstrap #}
+    {% bootstrap_css %}
+
+    {# Archivos #}
+    {% load static %}
+
+    <link rel="stylesheet" type="text/css" href="{% static 'css/estilos.css' %}">
+
+    </script>
+
+  </head>
+
+  <body>
+
+    <header>
+      <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+      <div class="container">
+        <a class="navbar-brand" href=""><img src="{% static 'uploads/logo.jpg' %}" width="50" class="img-fluid"></a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExample07" aria-controls="navbarsExample07" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarsExample07">
+          <ul class="navbar-nav mr-auto">
+              {% if request.user.groups.all.0.name == 'EMPRESA' %}
+                  <li class="nav-item {% if request.resolver_match.url_name == "leer" %}active{% endif %}">
+                    <a class="nav-link" href="{% url 'leer' %}" target="_self">Convenios CDA</a>
+                  </li>
+             {% endif %}
+             {% if request.user.groups.all.0.name == 'CDA' %}
+                  <li class="nav-item {% if request.resolver_match.url_name == "pendientes" %}active{% endif %}">
+                    <a class="nav-link" href="{% url 'pendientes' %}" target="_self">Convenios Pendientes</a>
+                  </li>
+             {% endif %}
+              <li class="nav-item {% if request.resolver_match.url_name == "admin" %}active{% endif %}">
+                <a class="nav-link" href="" target="_blank">Admin</a>
+              </li>
+
+                {% if user.is_authenticated %}
+                 <li class="nav-link"> {{ user.get_username }}</li>
+                 <li class="nav-item"><a class="nav-link" href="{% url 'logout'%}?next={{request.path}}">Logout</a></li>
+               {% else %}
+                 <li class="nav-item"><a class="nav-link" href="{% url 'login'%}?next={{request.path}}">Login</a></li>
+               {% endif %}
+        </ul>
+
+          <form name="search" method="get" action="{% url 'leer' %}" id="bencc" class="form-inline mt-2 mt-md-0" target="_self">
+            <input class="form-control mr-sm-2" type="text" placeholder="Buscar..." name="filter" aria-label="Buscar...">
+            <button class="btn btn-outline-success my-2 my-sm-0" type="submit" id="buscar" onclick="document.getElementById('search').submit()">Buscar</button>
+          </form>
+        </div>
+      </div>
+    </nav>
+    </header>
+
+{% block content %}
+{% endblock %}
+
+
+
+
+        </div>
+
+    </main>
+
+
+    <footer class="text-muted mt-3 mb-3">
+        <div align="center">
+          Desarrollado por <a href="http://www.xx.com" target="_blank">Xavi</a>
+      </div>
+    </footer>
+
+      {# JS y jQuery Bootstrap #}
+      {% bootstrap_javascript jquery='full' %}
+
+  </body>
+</html>

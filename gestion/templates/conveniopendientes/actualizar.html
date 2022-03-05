@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% block content %}
+{% load static %}
+{% load widget_tweaks %}
+
+<main role="main">
+
+        <div class="container text-center mt-5">
+
+          <div class="row mb-4">
+            <div class="col-md-12">
+              <h1 style="font-size: 28px;">Actualizar Convenio</h1>
+            </div>
+          </div>
+
+          <div class="row mb-5">
+
+            <div class="card col-md-2">
+              <h6 class="mt-4"><strong>Menú</strong></h6>
+              <ul class="list-group list-group-flush">
+                <li class="list-group-item">Dashboard</li>
+                <li class="list-group-item active">Convenios</li>
+                <li class="list-group-item">Configuración</li>
+              </ul>
+            </div>
+
+            <div class="col-md-10">
+
+              <div class="table-responsive">
+
+                <nav aria-label="breadcrumb mb-3">
+        					<ol class="breadcrumb">
+        					    <li class="breadcrumb-item"><a href="../">Convenios</a></li>
+        					    <li class="breadcrumb-item"><a href="#">Editar</a></li>
+        					    <li class="breadcrumb-item active" aria-current="page">{{object.nombre}} {{object.apellido}}</a></li>
+        					</ol>
+        				</nav>
+
+                <div class="formulario" align="left">
+
+                	<h4>Actualizar</h4>
+
+        					<form method="post" enctype="multipart/form-data">
+        					{% csrf_token %}
+        						<!-- {{ form.as_p }} -->
+        						<div class="form-group">
+        						    <label for="nombre" class="txt_negrita">Nombre</label>
+        						    {{ form.nombre|add_class:"form-control" }}
+        						</div>
+        						<div class="form-group">
+        						    <label for="apellido" class="txt_negrita">Apellido</label>
+        						    {{ form.apellido|add_class:"form-control" }}
+        						</div>
+        						<div class="form-group">
+        						    <label for="tipodocumento" class="txt_negrita">Tipo de Documento</label>
+        						    {{ form.tipodocumento|add_class:"form-control" }}
+        						</div>
+        						<div class="form-group">
+        						    <label for="documento" class="txt_negrita">Documento</label>
+        						    {{ form.documento|add_class:"form-control" }}
+        						</div>
+                                <div class="form-group">
+        						    <label for="telefono" class="txt_negrita">Teléfono</label>
+        						    {{ form.telefono|add_class:"form-control" }}
+        						</div>
+                                <div class="form-group">
+        						    <label for="placa" class="txt_negrita">Placa</label>
+        						    {{ form.placa|add_class:"form-control" }}
+        						</div>
+                                <div class="form-group">
+        						    <label for="chasis" class="txt_negrita"># Chasis</label>
+        						    {{ form.chasis|add_class:"form-control" }}
+        						</div>
+                                <div class="form-group">
+        						    <label for="valor" class="txt_negrita">Valor Revisión</label>
+        						    {{ form.valor|add_class:"form-control" }}
+        						</div>
+                                <div class="form-group">
+        						    <label for="empresa" class="txt_negrita">Empresa</label>
+        						    {{ form.empresa|add_class:"form-control" }}
+        						</div>
+                                <div class="form-group">
+        						    <label for="estado" class="txt_negrita">Estado</label>
+        						    {{ form.estado|add_class:"form-control" }}
+        						</div>
+                                <div class="form-group">
+        						    <label for="tipovehiculo" class="txt_negrita">Tipo de Vehículo</label>
+        						    {{ form.tipovehiculo|add_class:"form-control" }}
+        						</div>
+                                <div class="form-group">
+        						    <label for="observaciones" class="txt_negrita">Observaciones</label>
+        						    {{ form.observaciones|add_class:"form-control" }}
+        						</div>
+        						<button type="submit" class="btn btn-primary">Aceptar</button>
+                    <a href="../" type="submit" class="btn btn-primary">Volver</a>
+        					</form>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+          <hr>
+
+
+{% endblock %}
