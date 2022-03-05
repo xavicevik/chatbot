@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.humanize',
+    'import_export',
     'gestion',
     'bootstrap4',
     'widget_tweaks',

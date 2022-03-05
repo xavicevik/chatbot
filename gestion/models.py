@@ -120,6 +120,9 @@ class Conveniocda(models.Model):
     def __srt__(self):
         return self.nombre
 
+    def __unicode__(self):
+        return self.title
+
     class Meta:
         db_table = 'conveniocda'
         permissions = (

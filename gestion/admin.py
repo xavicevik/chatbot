@@ -2,6 +2,7 @@ from django.contrib import admin
 
 # Register your models here.
 from .models import Referidos, Estados, TiposDocumento, TiposVehiculo, Conveniocda, Empresas, EmpresaUsuario
+from import_export.admin import ExportActionMixin
 
 #admin.site.register(Referidos)
 admin.site.register(Estados)
@@ -31,7 +32,7 @@ class ReferidoAdmin(admin.ModelAdmin):
         }),
     )
 
-class ConvenioAdmin(admin.ModelAdmin):
+class ConvenioAdmin(ExportActionMixin, admin.ModelAdmin):
     list_display = ('id', 'nombre', 'apellido', 'documento', 'telefono', 'estado', 'placa','chasis','valor','observaciones','fechaCreacion','fechaModificacion','empresa','estado','tipovehiculo','creador')
     list_filter = ('estado', 'tipovehiculo','empresa')
     search_fields = ('documento','nombre','placa')
