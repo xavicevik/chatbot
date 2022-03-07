@@ -89,10 +89,12 @@
                           {% csrf_token %}
                           <div class="btn-group">
                             <a href="detalle/{{referidos.id}}" title="Ver" type="button" class="btn btn-success">Ver </a>
-                            <a href="editar/{{referidos.id}}" title="Editar" type="button" class="btn btn-primary">Editar </a>
-                            <button class="btn btn-danger" onclick="return eliminar();" type="submit">
+                            {% if request.user.groups.all.0.name == 'ADMIN' %}
+                              <a href="editar/{{referidos.id}}" title="Editar" type="button" class="btn btn-primary">Editar </a>
+                              <button class="btn btn-danger" onclick="return eliminar();" type="submit">
                               Eliminar
                             </button>
+                            {% endif %}
                             <!-- <a href="eliminar/{{referidos.id}}" title="Eliminar"><i class="fas fa-trash"></i> </a> -->
                           </div>
 

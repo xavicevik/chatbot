@@ -17,7 +17,7 @@ from django.contrib import admin
 from django.urls import path, include
 
 from gestion.views import ReferidosListado, ReferidoDetalle, ReferitosCrear, ReferitoEliminar, ReferidoActualizar, \
-    ConvenioListado, ConvenioDetalle, ConvenioCrear, ConvenioEliminar, ConvenioActualizar, ConvenioPendiente, ConvenioRevisar
+    ConvenioListado, ConvenioDetalle, ConvenioCrear, ConvenioEliminar, ConvenioActualizar, ConvenioPendiente, ConvenioRevisar, ConvenioRevisados
 
 urlpatterns = [
     path('accounts/', include('django.contrib.auth.urls')),
@@ -51,6 +51,8 @@ urlpatterns = [
     path('conveniocda/eliminar/<int:pk>', ConvenioEliminar.as_view(), name='eliminar'),
 
     path('conveniopendientes/', ConvenioPendiente.as_view(template_name="conveniopendientes/index.html"), name='pendientes'),
+    path('conveniopendientes/revisados', ConvenioRevisados.as_view(template_name="conveniopendientes/revisados.html"), name='revisados'),
+
     path('conveniopendientes/detalle/<int:pk>', ConvenioDetalle.as_view(template_name="conveniopendientes/detalles.html"),
          name='detallespendiente'),
     path('conveniopendientes/revisar/<int:pk>', ConvenioRevisar.as_view(template_name="conveniopendientes/revisar.html"),

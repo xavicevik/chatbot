@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 # Register your models here.
-from .models import Referidos, Estados, TiposDocumento, TiposVehiculo, Conveniocda, Empresas, EmpresaUsuario
+from .models import Referidos, Estados, TiposDocumento, TiposVehiculo, Conveniocda, Empresas, EmpresaUsuario, Fechasrevision
 from import_export.admin import ExportActionMixin
 
 #admin.site.register(Referidos)
@@ -9,6 +9,7 @@ admin.site.register(Estados)
 admin.site.register(TiposDocumento)
 admin.site.register(TiposVehiculo)
 admin.site.register(Empresas)
+admin.site.register(Fechasrevision)
 #admin.site.register(EmpresaUsuario)
 
 class EmpresaUsuarioAdmin(admin.ModelAdmin):

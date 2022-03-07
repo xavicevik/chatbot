@@ -43,14 +43,16 @@
                     <a class="nav-link" href="{% url 'leer' %}" target="_self">Convenios CDA</a>
                   </li>
              {% endif %}
-             {% if request.user.groups.all.0.name == 'CDA' or request.user.groups.all.0.name == 'ADMIN'%}
+             {% if request.user.groups.all.0.name == 'EMPRESA' or request.user.groups.all.0.name == 'CDA' or request.user.groups.all.0.name == 'ADMIN'%}
                   <li class="nav-item {% if request.resolver_match.url_name == "pendientes" %}active{% endif %}">
                     <a class="nav-link" href="{% url 'pendientes' %}" target="_self">Convenios Pendientes</a>
                   </li>
              {% endif %}
-              <li class="nav-item {% if request.resolver_match.url_name == "admin" %}active{% endif %}">
-                <a class="nav-link" href="" target="_blank">Admin</a>
-              </li>
+              {% if request.user.groups.all.0.name == 'EMPRESA' or request.user.groups.all.0.name == 'CDA' or request.user.groups.all.0.name == 'ADMIN'%}
+                  <li class="nav-item {% if request.resolver_match.url_name == "revisados" %}active{% endif %}">
+                    <a class="nav-link" href="{% url 'revisados' %}" target="_self">Convenios Revisados</a>
+                  </li>
+             {% endif %}
 
                 {% if user.is_authenticated %}
                  <li class="nav-link"> {{ user.get_username }}</li>
