@@ -13,13 +13,19 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from django.contrib import admin
-from django.urls import path, include
+from django.http import HttpResponseRedirect
 
 from gestion.views import ReferidosListado, ReferidoDetalle, ReferitosCrear, ReferitoEliminar, ReferidoActualizar, \
     ConvenioListado, ConvenioDetalle, ConvenioCrear, ConvenioEliminar, ConvenioActualizar, ConvenioPendiente, ConvenioRevisar, ConvenioRevisados
 
+from django.conf import settings
+from django.urls import include, path
+from django.contrib import admin
+from gestion.views import index
+
 urlpatterns = [
+    path('debug/', index),
+    path('', lambda r: HttpResponseRedirect('conveniocda/')),
     path('accounts/', include('django.contrib.auth.urls')),
     path('admin/', admin.site.urls),
 
@@ -58,3 +64,9 @@ urlpatterns = [
     path('conveniopendientes/revisar/<int:pk>', ConvenioRevisar.as_view(template_name="conveniopendientes/revisar.html"),
          name='revisar'),
 ]
+# Add Django Debug Toolbar
+if settings.DEBUG:
+    import debug_toolbar
+    urlpatterns +=[
+        path('__debug__/', include(debug_toolbar.urls)),
+    ]
