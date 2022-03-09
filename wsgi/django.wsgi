@@ -9,6 +9,4 @@ os.environ['DJANGO_SETTINGS_MODULE'] = 'chatbot.settings'
 
 sys.stdout = sys.stderr
 
-DEBUG = True
-
 application = get_wsgi_application()
