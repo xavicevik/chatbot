@@ -1,5 +1,3 @@
-from django.shortcuts import render, get_object_or_404
-
 # Create your views here.
 from django.views.generic import ListView, DetailView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
