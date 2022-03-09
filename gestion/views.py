@@ -1,11 +1,6 @@
-from django.shortcuts import render, get_object_or_404
-
 # Create your views here.
 from django.views.generic import ListView, DetailView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.mixins import LoginRequiredMixin
-from .models import ConveniosForm
 
 from .models import Referidos, Conveniocda, EmpresaUsuario
 from django.urls import reverse
@@ -15,10 +10,13 @@ from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
 
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.shortcuts import redirect, render
-from django.contrib.auth.models import User
-from django.db.models import Q
 from django import forms
+
+from django.shortcuts import render
+
+# Add index function to load html file
+def index(request):
+    return render(request, 'index.html')
 
 class ReferidosListado(ListView):
     model = Referidos

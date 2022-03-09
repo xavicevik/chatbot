@@ -26,10 +26,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-ivkk4^705sw0g@pzu$x3_&l89*vl9v-06f9t+_n+d4t+q4n4#a'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = bool( os.environ.get('DJANGO_DEBUG', True) )
+#DEBUG = bool( os.environ.get('DJANGO_DEBUG', True) )
+DEBUG = os.environ['DJANGO_DEBUG'] == 'TRUE'
+DB_PASSWORD = os.environ.get('DB_PASSWORD', '')
 
-ALLOWED_HOSTS = ['*']
-
+#ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS','*')
 
 # Application definition
 
@@ -41,6 +43,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.humanize',
+    'debug_toolbar',
     'clear_cache',
     'import_export',
     'gestion',
@@ -54,6 +57,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -94,7 +98,7 @@ DATABASES = {
             'ENGINE': 'django.db.backends.mysql',
             'NAME': 'chatbot',
             'USER': 'root',
-            'PASSWORD': '',
+            'PASSWORD': DB_PASSWORD,
             'HOST': 'localhost',
             'PORT': '3306',
             'OPTIONS': {
@@ -141,7 +145,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.0/howto/static-files/
 
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+#STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+ST_FILES = os.environ.get('ST_FILES', os.path.join(BASE_DIR, 'staticfiles'))
+#STATIC_ROOT = '/home/django/chatbot/staticfiles/'
+STATIC_ROOT = ST_FILES
 
 
 # Default primary key field type
@@ -154,8 +161,12 @@ from django.db.backends.mysql.base import DatabaseWrapper
 DatabaseWrapper.data_types['DateTimeField'] = 'datetime'
 
 
-import dj_database_url
-db_from_env = dj_database_url.config()
-DATABASES['default'].update(db_from_env)
+#import dj_database_url
+#db_from_env = dj_database_url.config()
+#DATABASES['default'].update(db_from_env)
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+INTERNAL_IPS = [
+         '15.204.0.40', '127.0.0.0', 'localhost'
+       ]
