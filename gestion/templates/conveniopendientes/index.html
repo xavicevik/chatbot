@@ -21,17 +21,7 @@
 
           <div class="row mb-5">
 
-            <div class="card col-md-2">
-              <h6 class="mt-4"><strong>Menú</strong></h6>
-              <ul class="list-group list-group-flush">
-                <li class="list-group-item">Dashboard</li>
-                <li class="list-group-item">Convenios</li>
-                <li class="list-group-item active">Pendientes</li>
-                <li class="list-group-item">Configuración</li>
-              </ul>
-            </div>
-
-            <div class="col-md-10">
+            <div class="col-md-12">
 
               <div class="table-responsive">
 
@@ -47,7 +37,7 @@
                   <thead>
                     <tr>
                         <th>ID</th>
-                      <th width="35%">Nombre</th>
+                      <th>Nombre</th>
                       <th>Documento</th>
                       <th>Teléfono</th>
                       <th>Placa</th>
@@ -72,7 +62,9 @@
                       <td>
                       <div class="btn-group">
                         <a href="detalle/{{referidos.id}}" title="Ver" type="button" class="btn btn-success">Ver </a>
-                        <a href="revisar/{{referidos.id}}" title="Editar" type="button" class="btn btn-primary">Revisar </a>
+                        {% if request.user.groups.all.0.name == 'CDA' %}
+                          <a href="revisar/{{referidos.id}}" title="Revisar" type="button" class="btn btn-primary">Revisar </a>
+                        {% endif %}
                       </div>
                       </td>
                     </tr>

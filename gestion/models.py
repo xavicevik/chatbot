@@ -14,6 +14,16 @@ class Estados(models.Model):
     class Meta:
         db_table = 'estados'
 
+class Fechasrevision(models.Model):
+    id = models.AutoField(primary_key=True)
+    fecha = models.CharField(max_length=10)
+
+    def __str__(self):
+        return self.fecha
+
+    class Meta:
+        db_table = 'fechasrevision'
+
 
 class Empresas(models.Model):
     id = models.AutoField(primary_key=True)
@@ -104,7 +114,8 @@ class Conveniocda(models.Model):
     placa = models.CharField(max_length=100, null=False)
     chasis = models.CharField(max_length=200, null=True)
     empresa = models.ForeignKey(Empresas, default=1, on_delete=models.CASCADE)
-    valor = models.CharField(max_length=200, default='$')
+    revision = models.ForeignKey(Fechasrevision, default='1', on_delete=models.CASCADE)
+    valor = models.CharField(max_length=200, default='$ ')
     observaciones = models.CharField(max_length=500)
     fechaCreacion = models.DateTimeField(auto_now_add=True)
     fechaModificacion = models.DateTimeField(auto_now_add=False)
@@ -120,8 +131,12 @@ class Conveniocda(models.Model):
     def __srt__(self):
         return self.nombre
 
+    def __unicode__(self):
+        return self.title
+
     class Meta:
         db_table = 'conveniocda'
+        unique_together = ('placa', 'revision')
         permissions = (
                         ("CDA", "Permisos CDA"),
                         ("GANE", "Permisos GANE"),

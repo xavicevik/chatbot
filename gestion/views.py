@@ -1,11 +1,6 @@
-from django.shortcuts import render, get_object_or_404
-
 # Create your views here.
 from django.views.generic import ListView, DetailView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.mixins import LoginRequiredMixin
-from .models import ConveniosForm
 
 from .models import Referidos, Conveniocda, EmpresaUsuario
 from django.urls import reverse
@@ -15,10 +10,13 @@ from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
 
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.shortcuts import redirect, render
-from django.contrib.auth.models import User
-from django.db.models import Q
 from django import forms
+
+from django.shortcuts import render
+
+# Add index function to load html file
+def index(request):
+    return render(request, 'index.html')
 
 class ReferidosListado(ListView):
     model = Referidos
@@ -84,20 +82,32 @@ class ConvenioListado(LoginRequiredMixin, ListView):
 
         if self.request.GET:
             filter_val = self.request.GET.get('filter', 'give-default-value')
-            new_context = Conveniocda.objects.filter(nombre__icontains=filter_val) | \
-                          Conveniocda.objects.filter(nombre__icontains=filter_val) | \
-                          Conveniocda.objects.filter(placa__icontains=filter_val) | \
-                          Conveniocda.objects.filter(apellido__icontains=filter_val)
+            new_context = Conveniocda.objects.filter(nombre__icontains=filter_val, empresa__id=idEmp) | \
+                          Conveniocda.objects.filter(apellido__icontains=filter_val, empresa__id=idEmp) | \
+                          Conveniocda.objects.filter(placa__icontains=filter_val, empresa__id=idEmp) | \
+                          Conveniocda.objects.filter(documento__icontains=filter_val, empresa__id=idEmp) | \
+                          Conveniocda.objects.filter(estado__nombre__icontains=filter_val, empresa__id=idEmp)
         else:
             new_context = Conveniocda.objects.filter(nombre__icontains='', empresa__id=idEmp)
 
         return new_context
 
-    def get_context_data(self, **kwargs):
-        context = super(ConvenioListado, self).get_context_data(**kwargs)
-        context['filter'] = self.request.GET.get('filter', 'give-default-value')
-        return context
+#    def get_context_data(self, **kwargs):
+#        context = super(ConvenioListado, self).get_context_data(**kwargs)
+#        context['filter'] = self.request.GET.get('filter', 'give-default-value')
+#        return context
 
+class ConvenioRevisados(LoginRequiredMixin, ListView):
+    model = Conveniocda
+    paginate_by = 10
+    context_object_name = 'convenio'
+
+    def get_queryset(self):
+        idEmp = EmpresaUsuario.objects.filter(usuario=self.request.user).values_list(
+            'empresa__id', flat=True).first()
+        filter_val = self.request.GET.get('filter', 'give-default-value')
+        new_context = Conveniocda.objects.filter(estado_id = 4, empresa__id=idEmp)
+        return new_context
 
 class ConvenioPendiente(LoginRequiredMixin, ListView):
     model = Conveniocda
@@ -111,19 +121,26 @@ class ConvenioPendiente(LoginRequiredMixin, ListView):
         new_context = Conveniocda.objects.filter(estado_id = 1, empresa__id=idEmp)
         return new_context
 
-    def get_context_data(self, **kwargs):
-        context = super(ConvenioPendiente, self).get_context_data(**kwargs)
-        context['filter'] = self.request.GET.get('filter', 'give-default-value')
-        return context
+#    def get_context_data(self, **kwargs):
+#        context = super(ConvenioPendiente, self).get_context_data(**kwargs)
+#        context['filter'] = self.request.GET.get('filter', 'give-default-value')
+#        return context
 
 class ConvenioCrear(LoginRequiredMixin, SuccessMessageMixin, CreateView):
     model = Conveniocda
     form = Conveniocda
-    fields = ['nombre', 'apellido', 'documento', 'telefono','placa','chasis','empresa', 'tipodocumento','tipovehiculo']
+    fields = ['nombre', 'apellido', 'documento', 'telefono','placa', 'chasis','tipodocumento','tipovehiculo', 'revision']
     success_message = "Convenio cda creado correctamente"
 
+    def form_valid(self, form):
+        idEmp = EmpresaUsuario.objects.filter(usuario=self.request.user).values_list(
+            'empresa__id', flat=True).first()
+        form.id_estado = 1
+        form.id_empresa = idEmp
+        return super().form_valid(form)
+
     def get_success_url(self):
-        return reverse('leer')
+        return reverse('pendientes')
 
 class ConvenioDetalle(LoginRequiredMixin, DetailView):
     model = Conveniocda
@@ -131,7 +148,9 @@ class ConvenioDetalle(LoginRequiredMixin, DetailView):
 class ConvenioActualizar(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
     model = Conveniocda
     form = Conveniocda
-    fields = "__all__"
+    fields = ['nombre', 'apellido', 'documento', 'telefono', 'placa', 'chasis', 'tipodocumento',
+              'tipovehiculo']
+
     success_message = 'Referido actualizado correctamente'
 
     def get_success_url(self):
@@ -181,6 +200,4 @@ class ConvenioRevisar(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
         return super().form_valid(form)
 
     def get_success_url(self):
-        return reverse('pendientes')
-
-
+        return reverse('revisados')

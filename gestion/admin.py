@@ -1,14 +1,23 @@
 from django.contrib import admin
 
 # Register your models here.
-from .models import Referidos, Estados, TiposDocumento, TiposVehiculo, Conveniocda, Empresas, EmpresaUsuario
+from .models import Referidos, Estados, TiposDocumento, TiposVehiculo, Conveniocda, Empresas, EmpresaUsuario, Fechasrevision
+from import_export.admin import ExportActionMixin
 
 #admin.site.register(Referidos)
 admin.site.register(Estados)
 admin.site.register(TiposDocumento)
 admin.site.register(TiposVehiculo)
 admin.site.register(Empresas)
-admin.site.register(EmpresaUsuario)
+admin.site.register(Fechasrevision)
+#admin.site.register(EmpresaUsuario)
+
+class EmpresaUsuarioAdmin(admin.ModelAdmin):
+    list_display = ('usuario', 'empresa')
+    list_filter = ('empresa', 'usuario')
+    search_fields = ('usuario','empresa')
+    list_per_page = 10
+
 
 class ReferidoAdmin(admin.ModelAdmin):
     list_display = ('id', 'nombre', 'apellido', 'documento', 'telefono', 'estado')
@@ -24,7 +33,7 @@ class ReferidoAdmin(admin.ModelAdmin):
         }),
     )
 
-class ConvenioAdmin(admin.ModelAdmin):
+class ConvenioAdmin(ExportActionMixin, admin.ModelAdmin):
     list_display = ('id', 'nombre', 'apellido', 'documento', 'telefono', 'estado', 'placa','chasis','valor','observaciones','fechaCreacion','fechaModificacion','empresa','estado','tipovehiculo','creador')
     list_filter = ('estado', 'tipovehiculo','empresa')
     search_fields = ('documento','nombre','placa')
@@ -40,6 +49,6 @@ class ConvenioAdmin(admin.ModelAdmin):
 
 #admin.site.register(Referidos, ReferidoAdmin)
 admin.site.register(Conveniocda, ConvenioAdmin)
-
+admin.site.register(EmpresaUsuario, EmpresaUsuarioAdmin)
 admin.site.site_header = "Convenios CDA Admin"
 admin.site.site_title = "Convenios CDA titulo"
