@@ -148,7 +148,7 @@ class ConvenioDetalle(LoginRequiredMixin, DetailView):
 class ConvenioActualizar(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
     model = Conveniocda
     form = Conveniocda
-    fields = ['nombre', 'apellido', 'documento', 'telefono', 'placa', 'chasis', 'tipodocumento',
+    fields = ['nombre', 'apellido', 'documento', 'telefono', 'placa', 'chasis', 'valor', 'tipodocumento',
               'tipovehiculo']
 
     success_message = 'Referido actualizado correctamente'
