@@ -21,11 +21,21 @@ from django.conf import settings
 from django.urls import include, path
 from django.contrib import admin
 from gestion.views import index
+from rest_framework import routers
 
 from django.conf.urls import include, url
+from gestion import views
+
+router = routers.DefaultRouter()
+router.register(r'usuarios', views.UserViewSet)
+router.register(r'grupos', views.GroupViewSet)
+router.register(r'convenios', views.ConveniosViewSet)
+router.register(r'empresas', views.EmpresasViewSet)
+router.register(r'tiposdocumento', views.TiposdocumentosViewSet)
 
 
 urlpatterns = [
+    path('api/', include(router.urls)),
     path('debug/', index),
     path('', lambda r: HttpResponseRedirect('conveniocda/')),
     path('accounts/', include('django.contrib.auth.urls')),
@@ -65,6 +75,7 @@ urlpatterns = [
          name='detallespendiente'),
     path('conveniopendientes/revisar/<int:pk>', ConvenioRevisar.as_view(template_name="conveniopendientes/revisar.html"),
          name='revisar'),
+    path('api-auth/', include('rest_framework.urls', namespace='rest_framework'))
 ]
 # Add Django Debug Toolbar
 if settings.DEBUG:

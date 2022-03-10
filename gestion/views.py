@@ -2,7 +2,7 @@
 from django.views.generic import ListView, DetailView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 
-from .models import Referidos, Conveniocda, EmpresaUsuario
+from .models import Referidos, Conveniocda, EmpresaUsuario, Empresas, TiposDocumento
 from django.urls import reverse
 
 from django.contrib import messages
@@ -13,6 +13,13 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django import forms
 
 from django.shortcuts import render
+from rest_framework import viewsets
+from rest_framework import permissions
+from .serializers import UserSerializer, GroupSerializer, ConveniosSerializers, EmpresasSerializers, TiposdocumentoSerializers
+from django.contrib.auth.models import User, Group
+
+from rest_framework import status
+from django.http import Http404
 
 # Add index function to load html file
 def index(request):
@@ -201,3 +208,28 @@ class ConvenioRevisar(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
 
     def get_success_url(self):
         return reverse('revisados')
+
+# API Rest
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all().order_by('-date_joined')
+    serializer_class = UserSerializer
+    #permission_classes = [permissions.IsAuthenticated]
+
+class GroupViewSet(viewsets.ModelViewSet):
+    queryset = Group.objects.all()
+    serializer_class = GroupSerializer
+
+class ConveniosViewSet(viewsets.ModelViewSet):
+    queryset = Conveniocda.objects.all()
+    serializer_class = ConveniosSerializers
+    permission_classes = [permissions.IsAuthenticated]
+
+class EmpresasViewSet(viewsets.ModelViewSet):
+    queryset = Empresas.objects.all()
+    serializer_class = EmpresasSerializers
+    permission_classes = [permissions.IsAuthenticated]
+
+class TiposdocumentosViewSet(viewsets.ModelViewSet):
+    queryset = TiposDocumento.objects.all()
+    serializer_class = TiposdocumentoSerializers
+    #permission_classes = [permissions.IsAuthenticated]
