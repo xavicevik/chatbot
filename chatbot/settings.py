@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'gestion',
     'bootstrap4',
     'widget_tweaks',
+    'rest_framework',
 ]
 
 MIDDLEWARE = [
