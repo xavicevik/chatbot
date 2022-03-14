@@ -34,7 +34,7 @@ class ReferidoAdmin(admin.ModelAdmin):
     )
 
 class ConvenioAdmin(ExportActionMixin, admin.ModelAdmin):
-    list_display = ('id', 'nombre', 'apellido', 'documento', 'telefono', 'estado', 'placa','chasis','valor','observaciones','fechaCreacion','fechaModificacion','empresa','estado','tipovehiculo','creador')
+    list_display = ('id', 'nombre', 'apellido', 'documento', 'telefono', 'estado', 'placa','valor','observaciones','fechaCreacion','fechaModificacion','empresa','estado','tipovehiculo','creador')
     list_filter = ('estado', 'tipovehiculo','empresa')
     search_fields = ('documento','nombre','placa')
     list_per_page = 10
@@ -43,7 +43,7 @@ class ConvenioAdmin(ExportActionMixin, admin.ModelAdmin):
             'fields': ('nombre', 'apellido', 'tipodocumento', 'documento','telefono')
         }),
         ('Vehiculo', {
-            'fields': ('tipovehiculo', 'placa', 'chasis', 'valor')
+            'fields': ('tipovehiculo', 'placa', 'valor')
         }),
     )
 

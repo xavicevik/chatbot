@@ -1,7 +1,8 @@
 # Create your views here.
-from django.views.generic import ListView, DetailView
-from django.views.generic.edit import CreateView, UpdateView, DeleteView
-
+from django.views.generic import ListView, DetailView, FormView
+from django.views.generic.edit import ModelFormMixin
+from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormMixin
+from django.http import Http404
 from .models import Referidos, Conveniocda, EmpresaUsuario, Empresas, TiposDocumento
 from django.urls import reverse
 
@@ -11,6 +12,7 @@ from django.contrib.messages.views import SuccessMessageMixin
 
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django import forms
+from bootstrap_datepicker_plus.widgets import DatePickerInput, DateTimePickerInput
 
 from django.shortcuts import render
 from rest_framework import viewsets
@@ -61,10 +63,58 @@ class ReferitoEliminar(SuccessMessageMixin, DeleteView):
         messages.success(self.request, (success_message))
         return reverse('leer')
 
-class ConvenioListado(LoginRequiredMixin, ListView):
+
+
+class BuscarConveniosForm(forms.ModelForm):
+    nombre = forms.CharField(required=False, widget=forms.TextInput(attrs={'placeholder': 'Nombre'}))
+    apellido = forms.CharField(required=False, widget=forms.TextInput(attrs={'placeholder': 'Apellido'}))
+    documento = forms.CharField(required=False, widget=forms.TextInput(attrs={'placeholder': 'Documento'}))
+    placa = forms.CharField(required=False, widget=forms.TextInput(attrs={'placeholder': 'Placa'}))
+    fecha_inicio = forms.DateField(widget=DatePickerInput(format='%m/%d/%Y', attrs={'placeholder': 'Fecha Inicio'}))
+    fecha_fin = forms.DateField(widget=DatePickerInput(format='%m/%d/%Y', attrs={'placeholder': 'Fecha Fin', 'required': 'False'}))
+
+    class Meta:
+        model = Conveniocda
+        fields = ['nombre', 'apellido', 'documento', 'placa']
+
+
+
+class ConvenioListado(LoginRequiredMixin, ListView, FormMixin):
     model = Conveniocda
     paginate_by = 10
     context_object_name = 'convenio'
+    form_class = BuscarConveniosForm
+    form = BuscarConveniosForm
+
+    def get(self, request, *args, **kwargs):
+        print('get')
+        self.form = BuscarConveniosForm(self.request.GET or None, )
+        return super(ConvenioListado, self).get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        print('post')
+
+        self.form = BuscarConveniosForm(self.request.POST or None)
+
+        if self.form.is_valid():
+            print(self.form.cleaned_data['nombre'])
+
+            self.object_list = self.get_queryset().filter(nombre__icontains=self.form.cleaned_data['nombre'],
+                                                          apellido__icontains=self.form.cleaned_data['apellido'],
+                                                          documento__icontains=self.form.cleaned_data['documento'],
+                                                          fechaModificacion__gte=self.form.cleaned_data['fecha_inicio'],
+                                                          fechaModificacion__lte=self.form.cleaned_data['fecha_fin'])
+
+            allow_empty = self.get_allow_empty()
+            if not allow_empty and len(self.object_list) == 0:
+                raise Http404((u"Empty list and '%(class_name)s.allow_empty' is False.")
+                              % {'class_name': self.__class__.__name__})
+
+            new_context = self.get_context_data(object_list=self.object_list, form=self.form)
+            return self.render_to_response(new_context)
+        else:
+            raise Http404((u"Empty list and '%(class_name)s.allow_empty' is xxx.")
+                          % {'class_name': self.__class__.__name__})
 
     def get_login_url(self):
         if not self.request.user.is_authenticated:
@@ -83,6 +133,7 @@ class ConvenioListado(LoginRequiredMixin, ListView):
         return False
 
     def get_queryset(self):
+        print('query')
         groups = self.request.user.groups.all().values_list('name', flat=True)
         idEmp = EmpresaUsuario.objects.filter(usuario=self.request.user).values_list(
             'empresa__id', flat=True).first()
@@ -99,10 +150,7 @@ class ConvenioListado(LoginRequiredMixin, ListView):
 
         return new_context
 
-#    def get_context_data(self, **kwargs):
-#        context = super(ConvenioListado, self).get_context_data(**kwargs)
-#        context['filter'] = self.request.GET.get('filter', 'give-default-value')
-#        return context
+
 
 class ConvenioRevisados(LoginRequiredMixin, ListView):
     model = Conveniocda
@@ -136,7 +184,7 @@ class ConvenioPendiente(LoginRequiredMixin, ListView):
 class ConvenioCrear(LoginRequiredMixin, SuccessMessageMixin, CreateView):
     model = Conveniocda
     form = Conveniocda
-    fields = ['nombre', 'apellido', 'documento', 'telefono','placa', 'chasis','tipodocumento','tipovehiculo', 'revision']
+    fields = ['nombre', 'apellido', 'documento', 'telefono','placa','tipodocumento','tipovehiculo', 'revision']
     success_message = "Convenio cda creado correctamente"
 
     def form_valid(self, form):
@@ -155,7 +203,7 @@ class ConvenioDetalle(LoginRequiredMixin, DetailView):
 class ConvenioActualizar(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
     model = Conveniocda
     form = Conveniocda
-    fields = ['nombre', 'apellido', 'documento', 'telefono', 'placa', 'chasis', 'valor', 'tipodocumento',
+    fields = ['nombre', 'apellido', 'documento', 'telefono', 'placa', 'valor', 'tipodocumento',
               'tipovehiculo']
 
     success_message = 'Referido actualizado correctamente'
@@ -185,8 +233,8 @@ class UserForm(forms.ModelForm):
         model = Conveniocda
         fields = ['valor', 'estado', 'observaciones']
 
-def clean_estado(self):
-    return self.initial['estado']
+    def clean_estado(self):
+        return self.initial['estado']
 
 class ConvenioRevisar(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
     model = Conveniocda

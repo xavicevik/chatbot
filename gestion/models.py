@@ -112,7 +112,6 @@ class Conveniocda(models.Model):
     estado = models.ForeignKey(Estados, default=1, on_delete=models.CASCADE)
     telefono = models.CharField(max_length=100, null=True)
     placa = models.CharField(max_length=100, null=False)
-    chasis = models.CharField(max_length=200, null=True)
     empresa = models.ForeignKey(Empresas, default=1, on_delete=models.CASCADE)
     revision = models.ForeignKey(Fechasrevision, default='1', on_delete=models.CASCADE)
     valor = models.CharField(max_length=200, default='$ ')

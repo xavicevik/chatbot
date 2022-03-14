@@ -3,6 +3,11 @@
 {% load static %}
 {% load widget_tweaks %}
 
+{% load bootstrap4 %}
+{% bootstrap_css %}
+{% bootstrap_javascript jquery='full' %}
+{{ form.media }}
+
 
 {% if request.user.groups.all.0.name == 'CDA' %}
     <meta http-equiv="REFRESH" content="0;url={% url 'pendientes' %}">
@@ -36,7 +41,49 @@
                 <li class="list-group-item">Configuración</li>
               </ul>
             </div>
+
+            <di
 -->
+
+        <div class="row">
+
+            <div class="container center" align="center" >
+
+                	<h4>Buscar</h4>
+
+        					<form method="post" enctype="multipart/form-data">
+        					{% csrf_token %}
+                                <!-- {% bootstrap_form form %} -->
+
+                                <div class="row" align="center">
+                                    <div class="form-group col-md-6">
+                                        {{ form.nombre|add_class:"form-control" }}
+                                    </div>
+                                    <div class="form-group col-md-6">
+                                        {{ form.apellido|add_class:"form-control" }}
+                                    </div>
+                                </div>
+                                <div class="row" align="center">
+                                    <div class="form-group col-md-6">
+                                        {{ form.documento|add_class:"form-control" }}
+                                    </div>
+                                    <div class="form-group col-md-6">
+                                        {{ form.placa|add_class:"form-control" }}
+                                    </div>
+                                </div>
+                                <div class="row" align="center">
+                                    <div class="form-group col-md-6">
+                                        {{ form.fecha_inicio|add_class:"bootstrap_form" }}
+                                    </div>
+                                    <div class="form-group col-md-6">
+                                        {{ form.fecha_fin|add_class:"form-control" }}
+                                    </div>
+                                </div>
+        						<button type="submit" class="btn btn-primary">Buscar</button>
+        					</form>
+
+                </div>
+        </div>
             <div class="col-md-12">
 
               <div class="table-responsive">
@@ -49,6 +96,8 @@
                 </ul>
                 {% endif %}
 
+
+
                 <div align="left" class="btn_crear mb-3">
                   <a href="crear" type="button" class="btn btn-primary">Crear convenio</a>
                 </div>
@@ -58,8 +107,7 @@
                   <thead>
                     <tr>
                         <th>ID</th>
-                      <th width="35%">Nombre</th>
-                      <th>Tipo Doc</th>
+                      <th width="10%">Nombre</th>
                       <th>Documento</th>
                       <th>Teléfono</th>
                       <th>Placa</th>
@@ -67,6 +115,7 @@
                       <th>Empresa</th>
                       <th>Vehículo</th>
                       <th>Estado</th>
+                      <th>Fecha</th>
                       <th>Acciones</th>
 
                     </tr>
@@ -76,7 +125,6 @@
                     <tr>
                       <td>{{ referidos.id }}</td>
                       <td>{{ referidos.nombre }} {{ referidos.apellido }}</td>
-                      <td>{{ referidos.tipodocumento }}</td>
                       <td>{{ referidos.documento }}</td>
                       <td>{{ referidos.telefono }}</td>
                       <td>{{ referidos.placa }}</td>
@@ -84,6 +132,7 @@
                       <td>{{ referidos.empresa }}</td>
                       <td>{{ referidos.tipovehiculo }}</td>
                       <td>{{ referidos.estado }}</td>
+                      <td>{{ referidos.fechaModificacion.date }}</td>
                       <td>
                         <form method="POST" action="eliminar/{{referidos.id}}">
                           {% csrf_token %}
@@ -139,10 +188,5 @@
           return false;
       }
 
-
-        $(document).ready(function() {
-            alert(1);
-            $('#example').DataTable();
-        } );
     </script>
 {% endblock %}
