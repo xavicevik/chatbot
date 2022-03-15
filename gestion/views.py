@@ -190,8 +190,13 @@ class ConvenioCrear(LoginRequiredMixin, SuccessMessageMixin, CreateView):
     def form_valid(self, form):
         idEmp = EmpresaUsuario.objects.filter(usuario=self.request.user).values_list(
             'empresa__id', flat=True).first()
-        form.id_estado = 1
-        form.id_empresa = idEmp
+        userId = User.objects.get(username=self.request.user).pk
+        Conveniocda = form.save()
+        Conveniocda.save()
+        Conveniocda.creador_id = userId
+        Conveniocda.estado_id = 1
+        Conveniocda.empresa_id = idEmp
+        Conveniocda.save()
         return super().form_valid(form)
 
     def get_success_url(self):
