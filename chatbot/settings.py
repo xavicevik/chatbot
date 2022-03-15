@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'bootstrap4',
     'widget_tweaks',
     'rest_framework',
+    'bootstrap_datepicker_plus',
 ]
 
 MIDDLEWARE = [
