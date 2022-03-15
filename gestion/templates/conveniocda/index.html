@@ -51,7 +51,7 @@
 
                 	<h4>Buscar</h4>
 
-        					<form method="post" enctype="multipart/form-data">
+        					<form method="post" action="{% url 'leer' %}" enctype="multipart/form-data">
         					{% csrf_token %}
                                 <!-- {% bootstrap_form form %} -->
 
