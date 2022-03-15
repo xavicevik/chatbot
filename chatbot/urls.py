@@ -42,7 +42,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
 
     # La ruta 'leer' en donde listamos todos los registros o postres de la Base de Datos
-    path('referidos/', ReferidosListado.as_view(template_name="referidos/index.html"), name='leer'),
+    path('referidos/', ReferidosListado.as_view(template_name="referidos/index.html"), name='leerreferido'),
 
     # La ruta 'detalles' en donde mostraremos una página con los detalles de un postre o registro
     path('referidos/detalle/<int:pk>', ReferidoDetalle.as_view(template_name="referidos/detalles.html"), name='detalles'),

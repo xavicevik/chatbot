@@ -3,7 +3,7 @@ from django.views.generic import ListView, DetailView, FormView
 from django.views.generic.edit import ModelFormMixin
 from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormMixin
 from django.http import Http404
-from .models import Referidos, Conveniocda, EmpresaUsuario, Empresas, TiposDocumento
+from .models import Referidos, Conveniocda, EmpresaUsuario, Empresas, TiposDocumento, Estados
 from django.urls import reverse
 
 from django.contrib import messages
@@ -105,16 +105,18 @@ class ConvenioListado(LoginRequiredMixin, ListView, FormMixin):
                                                           fechaModificacion__gte=self.form.cleaned_data['fecha_inicio'],
                                                           fechaModificacion__lte=self.form.cleaned_data['fecha_fin'])
 
-            allow_empty = self.get_allow_empty()
-            if not allow_empty and len(self.object_list) == 0:
-                raise Http404((u"Empty list and '%(class_name)s.allow_empty' is False.")
-                              % {'class_name': self.__class__.__name__})
+            #allow_empty = self.get_allow_empty()
+            #if not allow_empty and len(self.object_list) == 0:
+            #    raise Http404((u"Empty list and '%(class_name)s.allow_empty' is False.")
+            #                  % {'class_name': self.__class__.__name__})
 
             new_context = self.get_context_data(object_list=self.object_list, form=self.form)
             return self.render_to_response(new_context)
         else:
-            raise Http404((u"Empty list and '%(class_name)s.allow_empty' is xxx.")
-                          % {'class_name': self.__class__.__name__})
+            new_context = self.get_context_data(object_list=self.object_list, form=self.form)
+            return self.render_to_response(new_context)
+            #raise Http404((u"Empty list and '%(class_name)s.allow_empty' is xxx.")
+            #              % {'class_name': self.__class__.__name__})
 
     def get_login_url(self):
         if not self.request.user.is_authenticated:
@@ -123,7 +125,7 @@ class ConvenioListado(LoginRequiredMixin, ListView, FormMixin):
         # El usuario está logueado pero no está autorizado
         return '/no_autorizado/'
 
-    def test_func(self):
+    def _test_func(self):
         # obtenemos todos los grupos del usuario logueado
         grupos = self.request.user.groups.all()
         # comparamos que el usuario pertenezca al grupo VENDEDOR o SUPERVISOR
@@ -132,7 +134,7 @@ class ConvenioListado(LoginRequiredMixin, ListView, FormMixin):
                 return True
         return False
 
-    def get_queryset(self):
+    def _get_queryset(self):
         print('query')
         groups = self.request.user.groups.all().values_list('name', flat=True)
         idEmp = EmpresaUsuario.objects.filter(usuario=self.request.user).values_list(
@@ -227,26 +229,17 @@ class ConvenioEliminar(LoginRequiredMixin, SuccessMessageMixin, DeleteView):
         return reverse('leer')
 
 class UserForm(forms.ModelForm):
-    def __init__(self, *args, **kwargs):
-        super(UserForm, self).__init__(*args, **kwargs)
-        instance = getattr(self, 'instance', None)
-        if instance and instance.id:
-            self.fields['estado'].required = False
-            self.fields['estado'].widget.attrs['disabled'] = False
 
     class Meta:
         model = Conveniocda
-        fields = ['valor', 'estado', 'observaciones']
+        fields = ['valor', 'observaciones']
 
-    def clean_estado(self):
-        return self.initial['estado']
 
 class ConvenioRevisar(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
     model = Conveniocda
     #form = Conveniocda
     form_class = UserForm
     #fields = ['valor', 'estado', 'observaciones']
-    initial = {'estado': '4'}
     #disabled_fields = ('estado',)
     success_message = 'Se registró la revisión satisfactoriamente'
 
@@ -256,7 +249,9 @@ class ConvenioRevisar(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
         return context
 
     def form_valid(self, form):
-        self.object.estado_id = 4
+        Conveniocda = form.save()
+        Conveniocda.estado = Estados.objects.get(pk=4)
+        Conveniocda.save()
         return super().form_valid(form)
 
     def get_success_url(self):
