@@ -1,9 +1,12 @@
 # Create your views here.
+import datetime
+
 from django.views.generic import ListView, DetailView, FormView
 from django.views.generic.edit import ModelFormMixin
 from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormMixin
 from django.http import Http404
-from .models import Referidos, Conveniocda, EmpresaUsuario, Empresas, TiposDocumento, Estados
+
+from .models import Referidos, Conveniocda, EmpresaUsuario, Empresas, TiposDocumento, Estados, Historialconvenios
 from django.urls import reverse
 
 from django.contrib import messages
@@ -19,6 +22,9 @@ from rest_framework import viewsets
 from rest_framework import permissions
 from .serializers import UserSerializer, GroupSerializer, ConveniosSerializers, EmpresasSerializers, TiposdocumentoSerializers
 from django.contrib.auth.models import User, Group
+
+from django.conf import settings
+from django.core.mail import send_mail
 
 from rest_framework import status
 from django.http import Http404
@@ -199,6 +205,23 @@ class ConvenioCrear(LoginRequiredMixin, SuccessMessageMixin, CreateView):
         Conveniocda.estado_id = 1
         Conveniocda.empresa_id = idEmp
         Conveniocda.save()
+
+        historial = Historialconvenios()
+        historial.convenio = Conveniocda
+        historial.estado = Conveniocda.estado
+        historial.observaciones = Conveniocda.observaciones
+        historial.fecha = datetime.datetime.now()
+        historial.usuario_id = userId
+        historial.save()
+
+        #send_mail(
+        #    'Subject',
+        #    'Message.',
+        #    'from@example.com',
+        #    ['john@example.com', 'jane@example.com'],
+        #    fail_silently=False
+        #)
+
         return super().form_valid(form)
 
     def get_success_url(self):
@@ -252,6 +275,14 @@ class ConvenioRevisar(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
         Conveniocda = form.save()
         Conveniocda.estado = Estados.objects.get(pk=4)
         Conveniocda.save()
+
+        historial = Historialconvenios()
+        historial.convenio = Conveniocda
+        historial.estado = Conveniocda.estado
+        historial.observaciones = Conveniocda.observaciones
+        historial.fecha = datetime.datetime.now()
+        historial.usuario_id = User.objects.get(username=self.request.user).pk
+        historial.save()
         return super().form_valid(form)
 
     def get_success_url(self):
