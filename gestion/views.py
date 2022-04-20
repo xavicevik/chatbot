@@ -95,6 +95,18 @@ class ConvenioListado(LoginRequiredMixin, ListView, FormMixin):
     def get(self, request, *args, **kwargs):
         print('get')
         self.form = BuscarConveniosForm(self.request.GET or None, )
+
+        idEmp = EmpresaUsuario.objects.filter(usuario=self.request.user).values_list(
+            'empresa__id', flat=True).first()
+
+        idRol = Group.objects.filter(user=self.request.user).values_list('name', flat=True).first()
+
+        if (idRol == 'CDA' or idRol == 'ADMIN'):
+            new_context = Conveniocda.objects.filter(nombre__icontains='')
+        else:
+            new_context = Conveniocda.objects.filter(nombre__icontains='', empresa__id=idEmp)
+        self.queryset = new_context
+
         return super(ConvenioListado, self).get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
@@ -103,14 +115,24 @@ class ConvenioListado(LoginRequiredMixin, ListView, FormMixin):
         self.form = BuscarConveniosForm(self.request.POST or None)
 
         if self.form.is_valid():
-            print(self.form.cleaned_data['nombre'])
+            idEmp = EmpresaUsuario.objects.filter(usuario=self.request.user).values_list(
+                'empresa__id', flat=True).first()
+            idRol = Group.objects.filter(user=self.request.user).values_list('name', flat=True).first()
 
-            self.object_list = self.get_queryset().filter(nombre__icontains=self.form.cleaned_data['nombre'],
+            if (idRol == 'CDA' or idRol == 'ADMIN'):
+                self.object_list = self.get_queryset().filter(nombre__icontains=self.form.cleaned_data['nombre'],
                                                           apellido__icontains=self.form.cleaned_data['apellido'],
                                                           documento__icontains=self.form.cleaned_data['documento'],
                                                           fechaModificacion__gte=self.form.cleaned_data['fecha_inicio'],
                                                           fechaModificacion__lte=self.form.cleaned_data['fecha_fin'])
-
+            else:
+                self.object_list = self.get_queryset().filter(nombre__icontains=self.form.cleaned_data['nombre'],
+                                                              apellido__icontains=self.form.cleaned_data['apellido'],
+                                                              documento__icontains=self.form.cleaned_data['documento'],
+                                                              fechaModificacion__gte=self.form.cleaned_data[
+                                                                  'fecha_inicio'],
+                                                              fechaModificacion__lte=self.form.cleaned_data[
+                                                                  'fecha_fin'], empresa__id=idEmp)
             #allow_empty = self.get_allow_empty()
             #if not allow_empty and len(self.object_list) == 0:
             #    raise Http404((u"Empty list and '%(class_name)s.allow_empty' is False.")
@@ -146,15 +168,28 @@ class ConvenioListado(LoginRequiredMixin, ListView, FormMixin):
         idEmp = EmpresaUsuario.objects.filter(usuario=self.request.user).values_list(
             'empresa__id', flat=True).first()
 
+        idRol = Group.objects.filter(user=self.request.user).values_list('name', flat=True).first()
+
         if self.request.GET:
-            filter_val = self.request.GET.get('filter', 'give-default-value')
-            new_context = Conveniocda.objects.filter(nombre__icontains=filter_val, empresa__id=idEmp) | \
-                          Conveniocda.objects.filter(apellido__icontains=filter_val, empresa__id=idEmp) | \
-                          Conveniocda.objects.filter(placa__icontains=filter_val, empresa__id=idEmp) | \
-                          Conveniocda.objects.filter(documento__icontains=filter_val, empresa__id=idEmp) | \
-                          Conveniocda.objects.filter(estado__nombre__icontains=filter_val, empresa__id=idEmp)
+            if (idRol == 'CDA' or idRol == 'ADMIN'):
+                filter_val = self.request.GET.get('filter', 'give-default-value')
+                new_context = Conveniocda.objects.filter(nombre__icontains=filter_val) | \
+                              Conveniocda.objects.filter(apellido__icontains=filter_val) | \
+                              Conveniocda.objects.filter(placa__icontains=filter_val) | \
+                              Conveniocda.objects.filter(documento__icontains=filter_val) | \
+                              Conveniocda.objects.filter(estado__nombre__icontains=filter_val)
+            else:
+                filter_val = self.request.GET.get('filter', 'give-default-value')
+                new_context = Conveniocda.objects.filter(nombre__icontains=filter_val, empresa__id=idEmp) | \
+                              Conveniocda.objects.filter(apellido__icontains=filter_val, empresa__id=idEmp) | \
+                              Conveniocda.objects.filter(placa__icontains=filter_val, empresa__id=idEmp) | \
+                              Conveniocda.objects.filter(documento__icontains=filter_val, empresa__id=idEmp) | \
+                              Conveniocda.objects.filter(estado__nombre__icontains=filter_val, empresa__id=idEmp)
         else:
-            new_context = Conveniocda.objects.filter(nombre__icontains='', empresa__id=idEmp)
+            if (idRol == 'CDA' or idRol == 'ADMIN'):
+                new_context = Conveniocda.objects.filter(nombre__icontains='')
+            else:
+                new_context = Conveniocda.objects.filter(nombre__icontains='', empresa__id=idEmp)
 
         return new_context
 
@@ -168,8 +203,14 @@ class ConvenioRevisados(LoginRequiredMixin, ListView):
     def get_queryset(self):
         idEmp = EmpresaUsuario.objects.filter(usuario=self.request.user).values_list(
             'empresa__id', flat=True).first()
+        idRol = Group.objects.filter(user=self.request.user).values_list('name', flat=True).first()
+
         filter_val = self.request.GET.get('filter', 'give-default-value')
-        new_context = Conveniocda.objects.filter(estado_id = 4, empresa__id=idEmp)
+        if (idRol == 'CDA' or idRol == 'ADMIN'):
+            new_context = Conveniocda.objects.filter(estado_id=4)
+        else:
+            new_context = Conveniocda.objects.filter(estado_id = 4, empresa__id=idEmp)
+
         return new_context
 
 class ConvenioPendiente(LoginRequiredMixin, ListView):
@@ -180,8 +221,16 @@ class ConvenioPendiente(LoginRequiredMixin, ListView):
     def get_queryset(self):
         idEmp = EmpresaUsuario.objects.filter(usuario=self.request.user).values_list(
             'empresa__id', flat=True).first()
+
+        idRol = Group.objects.filter(user=self.request.user).values_list('name', flat=True).first()
+
         filter_val = self.request.GET.get('filter', 'give-default-value')
-        new_context = Conveniocda.objects.filter(estado_id = 1, empresa__id=idEmp)
+
+        if (idRol == 'CDA' or idRol == 'ADMIN'):
+            new_context = Conveniocda.objects.filter(estado_id = 1)
+        else:
+            new_context = Conveniocda.objects.filter(estado_id = 1, empresa__id=idEmp)
+
         return new_context
 
 #    def get_context_data(self, **kwargs):
