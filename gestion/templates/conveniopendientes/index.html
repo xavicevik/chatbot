@@ -1,26 +1,69 @@
-{% extends 'base.html' %}
+{% extends "layouts/base.html" %}
 {% block content %}
 {% load static %}
 {% load widget_tweaks %}
+{% load filters %}
+
+{% load bootstrap4 %}
+{% bootstrap_css %}
+{% bootstrap_javascript jquery='full' %}
+{{ form.media }}
 
     <main role="main">
 
-        <div class="container text-center mt-5">
+        <div class="container1 text-center">
 
-          <div class="row mb-4">
-            <div class="col-md-12">
-              <h1 style="font-size: 28px;">Convenios Pendientes CDA </h1>
-            </div>
-          </div>
+            <div class="center m-4" align="center col-md-12" >
+                    <form method="post" action="{% url 'pendientes' %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                        <!-- {% bootstrap_form form %} -->
 
-          <div class="row">
-            <div class="col-md-12">
-              <h5>Lista de convenios</h5>
-            </div>
-          </div>
+                        <div class="row" align="center">
+                            <div class="form-group col-md-3">
+                                {{ form.nombre|add_class:"form-control" }}
+                            </div>
+                            <div class="form-group col-md-3">
+                                {{ form.apellido|add_class:"form-control" }}
+                            </div>
+                            <div class="form-group col-md-3">
+                                {{ form.documento|add_class:"form-control" }}
+                            </div>
+                            <div class="form-group col-md-3">
+                                {{ form.placa|add_class:"form-control" }}
+                            </div>
+                        </div>
+                        <div class="row" align="center">
+                            <div class="form-group col-md-3">
+                                {{ form.fecha_inicio|add_class:"form-control" }}
+                            </div>
+                            <div class="form-group col-md-3">
+                                {{ form.fecha_fin|add_class:"form-control" }}
+                            </div>
+                            <div class="form-group col-md-3">
+                                {{ form.fecha_mod_inicio|add_class:"form-control" }}
+                            </div>
+                            <div class="form-group col-md-3">
+                                {{ form.fecha_mod_fin|add_class:"form-control" }}
+                            </div>
+                        </div>
+                        <div class="row" align="center">
+                            <div class="form-group col-md-3">
+                                {{ form.fecha_pago_inicio|add_class:"form-control" }}
+                            </div>
+                            <div class="form-group col-md-3">
+                                {{ form.fecha_pago_fin|add_class:"form-control" }}
+                            </div>
+                            <div class="form-group col-md-3">
+                                {{ form.fecha_concilia_inicio|add_class:"form-control" }}
+                            </div>
+                            <div class="form-group col-md-3">
+                                {{ form.fecha_concilia_fin|add_class:"form-control" }}
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-sm">Buscar</button>
+                    </form>
 
-          <div class="row mb-5">
-
+                </div>
             <div class="col-md-12">
 
               <div class="table-responsive">
@@ -33,17 +76,32 @@
                 </ul>
                 {% endif %}
 
-                <table class="table table-striped table-hover">
+              <form method="POST" action="{% url 'leer' %}">
+                  {% csrf_token %}
+                <div align="right" class="mb-3 flex-column">
+                   <label>Mostrar:</label>
+                      <select class="mr-2" id="paginate" name="paginate" onchange="submit()">
+                          <option {% if request.session.paginate == '5' %} selected {% endif %}>5</option>
+                          <option {% if request.session.paginate == '10' %} selected {% endif %}>10</option>
+                          <option {% if request.session.paginate == '20' %} selected {% endif %}>20</option>
+                          <option {% if request.session.paginate == '50' %} selected {% endif %}>50</option>
+                      </select>
+                </div>
+              </form>
+
+                <table id="example" class="table table-responsive-sm table-bordered table-striped table-sm">
                   <thead>
                     <tr>
-                        <th>ID</th>
-                      <th>Nombre</th>
+                      <th width="10%">Nombre</th>
                       <th>Documento</th>
                       <th>Teléfono</th>
                       <th>Placa</th>
+                      <th>Valor</th>
                       <th>Empresa</th>
                       <th>Vehículo</th>
                       <th>Estado</th>
+                      <th>Creación</th>
+                      <th>Modificación</th>
                       <th>Acciones</th>
 
                     </tr>
@@ -51,45 +109,59 @@
                   <tbody>
                     {% for referidos in object_list %}
                     <tr>
-                      <td>{{ referidos.id }}</td>
-                      <td>{{ referidos.nombre }} {{ referidos.apellido }}</td>
+                      <td>{{ referidos.full_name }}</td>
                       <td>{{ referidos.documento }}</td>
                       <td>{{ referidos.telefono }}</td>
                       <td>{{ referidos.placa }}</td>
+                      <td>{{ referidos.valor }}</td>
                       <td>{{ referidos.empresa }}</td>
                       <td>{{ referidos.tipovehiculo }}</td>
-                      <td>{{ referidos.estado }}</td>
+                      <td><span class="badge {{ referidos.estado_id|state_css_class }}">{{ referidos.estado }}</span></td>
+                      <td>{{ referidos.fechaCreacion.date|date:"d-M-Y" }}</td>
+                      <td>{{ referidos.fechaModificacion.date|date:"d-M-Y" }}</td>
                       <td>
-                      <div class="btn-group">
-                        <a href="detalle/{{referidos.id}}" title="Ver" type="button" class="btn btn-success">Ver </a>
-                        {% if request.user.groups.all.0.name == 'CDA' %}
-                          <a href="revisar/{{referidos.id}}" title="Revisar" type="button" class="btn btn-primary">Revisar </a>
-                        {% endif %}
-                      </div>
+                        <form method="POST" action="eliminar/{{referidos.id}}">
+                          {% csrf_token %}
+                          <div class="btn-group btn-sm">
+                            <a href="detalle/{{referidos.id}}" title="Ver" type="button" class="btn btn-success btn-sm">Ver </a>
+                            {% if request.user.groups.all.0.name == 'CDA' %}
+                                <a href="revisar/{{referidos.id}}" title="Revisar" type="button" class="btn btn-primary">Revisar </a>
+                            {% endif %}
+                          </div>
+
+                        </form>
+
                       </td>
                     </tr>
                   {% endfor %}
                   </tbody>
                 </table>
-              </div>
-
-            <div class="pag ination">
-                <span class="step-links">
+              <nav>
+                  <ul class="pagination justify-content-center">
                     {% if page_obj.has_previous %}
-                        <a href="?page=1">&laquo; Pimero</a>
-                        <a href="?page={{ page_obj.previous_page_number }}">Atras</a>
+                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Atras</a></li>
+                        {% else %}
+                        <li class="page-item disabled"><a class="page-link" href="">Atras</a></li>
                     {% endif %}
 
-                    <span class="current">
-                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
-                    </span>
+                  {% for i in "x"|rjust:page_obj.paginator.num_pages|make_list %}
 
-                    {% if page_obj.has_next %}
-                        <a href="?page={{ page_obj.next_page_number }}">Siguiente</a>
-                        <a href="?page={{ page_obj.paginator.num_pages }}">Ultimo &raquo;</a>
+                  {% if page_obj.number == forloop.counter %}
+                        <li class="page-item active"><a class="page-link" href="?page={{ forloop.counter }}">{{ forloop.counter }}</a></li>
+                          {% else %}
+                          <li class="page-item"><a class="page-link" href="?page={{ forloop.counter }}">{{ forloop.counter }}</a></li>
+
+                      {% endif %}
+                    {% endfor %}
+
+                  {% if page_obj.has_next %}
+                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Siguiente</a></li>
+                      {% else %}
+                        <li class="page-item disabled"><a class="page-link" href="">Siguiente</a></li>
                     {% endif %}
-                </span>
-            </div>
+                  </ul>
+                </nav>
+              </div>
 
             </div>
 
@@ -98,11 +170,16 @@
           <hr>
   <script type="text/javascript">
       function eliminar() {
-        var x = confirm("Eliminar Producto ?");
+        var x = confirm("Eliminar Convenio ?");
         if (x)
           return true;
         else
           return false;
       }
+
     </script>
+      <!-- CoreUI and necessary plugins-->
+    <script src="https://appsrv1-147a1.kxcdn.com/coreui/vendors/@coreui/coreui/js/coreui.bundle.min.js"></script>
+    <!--[if IE]><!-->
+    <script src="https://appsrv1-147a1.kxcdn.com/coreui/vendors/@coreui/icons/js/svgxuse.min.js"></script>
 {% endblock %}
