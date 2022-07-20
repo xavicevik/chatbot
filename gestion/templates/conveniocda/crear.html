@@ -1,89 +1,97 @@
-{% extends 'base.html' %}
+{% extends "layouts/base.html" %}
 {% block content %}
 {% load static %}
+{% load humanize %}
 {% load widget_tweaks %}
+{% load filters %}
+{% load bootstrap4 %}
+{% bootstrap_css %}
+{% bootstrap_javascript jquery='full' %}
+{{ form.media }}
 
-<main role="main">
+    <main role="main">
 
-        <div class="container text-center mt-5">
-
-          <div class="row mb-4">
-            <div class="col-md-12">
-              <h1 style="font-size: 28px;">Convenios CDA </h1>
-            </div>
-          </div>
-
-          <div class="row mb-5">
-
-            <div class="col-md-12">
-
-              <div class="table-responsive">
-
-                <nav aria-label="breadcrumb mb-3">
-        					<ol class="breadcrumb">
-        					    <li class="breadcrumb-item"><a href="./">Convenios</a></li>
-        					    <li class="breadcrumb-item active">Crear</li>
-        					</ol>
-        				</nav>
-
-                <div class="formulario" align="left">
-
-                	<h4>Crear</h4>
-
-        					<form method="post" enctype="multipart/form-data">
-        					{% csrf_token %}
-        						<!-- {{ form.as_p }} -->
-        						<div class="form-group">
-        						    <label for="nombre" class="txt_negrita">Nombre</label>
-        						    {{ form.nombre|add_class:"form-control" }}
-        						</div>
-        						<div class="form-group">
-        						    <label for="apellido" class="txt_negrita">Apellido</label>
-        						    {{ form.apellido|add_class:"form-control" }}
-        						</div>
-        						<div class="form-group">
-        						    <label for="tipodocumento" class="txt_negrita">Tipo de Documento</label>
-        						    {{ form.tipodocumento|add_class:"form-control" }}
-        						</div>
-        						<div class="form-group">
-        						    <label for="documento" class="txt_negrita">Documento</label>
-        						    {{ form.documento|add_class:"form-control" }}
-        						</div>
-                                <div class="form-group">
-        						    <label for="telefono" class="txt_negrita">Teléfono</label>
-        						    {{ form.telefono|add_class:"form-control" }}
-        						</div>
-                                <div class="form-group">
-        						    <label for="placa" class="txt_negrita">Placa</label>
-        						    {{ form.placa|add_class:"form-control" }}
-        						</div>
-                                <div class="form-group">
-        						    <label for="revision" class="txt_negrita">Año revisión</label>
-        						    {{ form.revision|add_class:"form-control" }}
-        						</div>
-                                <div class="form-group">
-        						    <label for="tipovehiculo" class="txt_negrita">Tipo de Vehículo</label>
-        						    {{ form.tipovehiculo|add_class:"form-control" }}
-        						</div>
-        						<button type="submit" class="btn btn-primary">Aceptar</button>
-                    <a href="./" type="submit" class="btn btn-primary">Cancelar</a>
-        					</form>
-
+    <div class="container-fluid">
+      <div class="fade-in">
+        <form method="post" enctype="multipart/form-data">
+        	{% csrf_token %}
+            <!-- {{ form.as_p }} -->
+            <div class="row">
+          <div class="col-sm-12">
+            <div class="card">
+              <div class="card-header"><strong>Crear Convenio</strong> </div>
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-sm-6">
+                    <div class="form-group">
+                      <label for="name">Nombre</label>
+                      {{ form.nombre|add_class:"form-control" }}
+                    </div>
+                  </div>
+                  <div class="col-sm-6">
+                    <div class="form-group">
+                      <label for="ccnumber">Apellido</label>
+                      {{ form.apellido|add_class:"form-control" }}
+                    </div>
+                  </div>
+                </div>
+                <!-- /.row-->
+                <!-- /.row-->
+                <div class="row">
+                  <div class="col-sm-6">
+                    <div class="form-group">
+                      <label for="ccnumber">Tipo documento</label>
+                        {{ form.tipodocumento|add_class:"form-control" }}
+                    </div>
+                  </div>
+                  <div class="col-sm-6">
+                    <div class="form-group">
+                      <label for="ccnumber">Documento</label>
+                      {{ form.documento|add_class:"form-control" }}
+                    </div>
+                  </div>
+                </div>
+                <!-- /.row-->
+                 <!-- /.row-->
+                <div class="row">
+                  <div class="col-sm-6">
+                    <div class="form-group">
+                      <label for="ccnumber">Teléfono</label>
+                      {{ form.telefono|add_class:"form-control" }}
+                    </div>
+                  </div>
+                  <div class="col-sm-6">
+                    <div class="form-group">
+                      <label for="ccnumber">Revisión</label>
+                       {{ form.revision|add_class:"form-control" }}
+                    </div>
+                  </div>
+                </div>
+                <!-- /.row-->
+                <div class="row">
+                  <div class="col-sm-6">
+                    <div class="form-group">
+                      <label for="name">Tipo vehículo</label>
+                      {{ form.tipovehiculo|add_class:"form-control" }}
+                    </div>
+                  </div>
+                  <div class="col-sm-6">
+                    <div class="form-group">
+                      <label for="ccnumber">Placa</label>
+                      {{ form.placa|add_class:"form-control" }}
+                    </div>
+                  </div>
                 </div>
 
               </div>
-
             </div>
-
           </div>
+        </div>
+      </div>
+            <button type="submit" class="btn btn-primary btn-sm">Aceptar</button>
+            <a href="../" type="submit" class="btn btn-primary btn-sm">Volver</a>
+        </form>
+    </div>
 
           <hr>
-
-          <div class="row">
-
-
-          </div>
-
-
-
 {% endblock %}

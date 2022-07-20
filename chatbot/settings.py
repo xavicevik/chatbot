@@ -28,6 +28,7 @@ DEBUG = config('DJANGO_DEBUG', cast=bool)
 
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=Csv())
 
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -46,6 +47,7 @@ INSTALLED_APPS = [
     'widget_tweaks',
     'rest_framework',
     'bootstrap_datepicker_plus',
+    'bootstrap_modal_forms'
 ]
 
 MIDDLEWARE = [
@@ -62,6 +64,7 @@ MIDDLEWARE = [
 ROOT_URLCONF = 'chatbot.urls'
 X_FRAME_OPTIONS = 'SAMEORIGIN'
 LOGIN_REDIRECT_URL = '../../conveniocda/'
+LOGOUT_REDIRECT_URL = '../../conveniocda/'
 
 TEMPLATES = [
     {

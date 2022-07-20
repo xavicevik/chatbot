@@ -31,11 +31,12 @@ from django.http import Http404
 
 # Add index function to load html file
 def index(request):
+    request.session['paginate'] = "20"
     return render(request, 'index.html')
 
 class ReferidosListado(ListView):
     model = Referidos
-    paginate_by = 10
+    paginate_by = 20
     context_object_name = 'referidos'
 
 class ReferitosCrear(SuccessMessageMixin, CreateView):
@@ -76,24 +77,46 @@ class BuscarConveniosForm(forms.ModelForm):
     apellido = forms.CharField(required=False, widget=forms.TextInput(attrs={'placeholder': 'Apellido'}))
     documento = forms.CharField(required=False, widget=forms.TextInput(attrs={'placeholder': 'Documento'}))
     placa = forms.CharField(required=False, widget=forms.TextInput(attrs={'placeholder': 'Placa'}))
-    fecha_inicio = forms.DateField(widget=DatePickerInput(format='%m/%d/%Y', attrs={'placeholder': 'Fecha Inicio'}))
-    fecha_fin = forms.DateField(widget=DatePickerInput(format='%m/%d/%Y', attrs={'placeholder': 'Fecha Fin', 'required': 'False'}))
+    fecha_inicio = forms.DateField(required=False, widget=DatePickerInput(format='%m/%d/%Y', attrs={'placeholder': 'Fecha Inicio Creación'}))
+    fecha_fin = forms.DateField(required=False, widget=DatePickerInput(format='%m/%d/%Y', attrs={'placeholder': 'Fecha Fin Creación'}))
+    fecha_mod_inicio = forms.DateField(required=False, widget=DatePickerInput(format='%m/%d/%Y', attrs={'placeholder': 'Fecha Inicio Modificación'}))
+    fecha_mod_fin = forms.DateField(required=False, widget=DatePickerInput(format='%m/%d/%Y', attrs={'placeholder': 'Fecha Fin Modificación'}))
+    fecha_pago_inicio = forms.DateField(required=False, widget=DatePickerInput(format='%m/%d/%Y', attrs={'placeholder': 'Fecha Inicio Pago'}))
+    fecha_pago_fin = forms.DateField(required=False, widget=DatePickerInput(format='%m/%d/%Y', attrs={'placeholder': 'Fecha Fin Pago'}))
+    fecha_concilia_inicio = forms.DateField(required=False, widget=DatePickerInput(format='%m/%d/%Y', attrs={'placeholder': 'Fecha Inicio Conciliación'}))
+    fecha_concilia_fin = forms.DateField(required=False, widget=DatePickerInput(format='%m/%d/%Y', attrs={'placeholder': 'Fecha Fin Conciliación'}))
 
     class Meta:
         model = Conveniocda
         fields = ['nombre', 'apellido', 'documento', 'placa']
 
+class UpdateConveniosForm(forms.ModelForm):
+    nombre = forms.CharField(required=False, widget=forms.TextInput(attrs={'placeholder': 'Nombre'}))
+    apellido = forms.CharField(required=False, widget=forms.TextInput(attrs={'placeholder': 'Apellido'}))
+    documento = forms.CharField(required=False, widget=forms.TextInput(attrs={'placeholder': 'Documento'}))
+    telefono = forms.CharField(required=False, widget=forms.TextInput(attrs={'placeholder': 'Teléfono'}))
+    placa = forms.CharField(required=False, widget=forms.TextInput(attrs={'placeholder': 'Placa'}))
+    fechaPago = forms.DateField(required=False, widget=DatePickerInput(format='%m/%d/%Y', attrs={'placeholder': 'Fecha Pago'}))
+    fechaConciliacion = forms.DateField(required=False, widget=DatePickerInput(format='%m/%d/%Y', attrs={'placeholder': 'Fecha Conciliación'}))
 
+    class Meta:
+        model = Conveniocda
+        fields = ['nombre', 'apellido', 'documento', 'telefono', 'placa', 'valor', 'tipodocumento',
+                  'tipovehiculo', 'estado', 'fechaPago', 'fechaConciliacion', 'observaciones']
 
 class ConvenioListado(LoginRequiredMixin, ListView, FormMixin):
     model = Conveniocda
-    paginate_by = 10
     context_object_name = 'convenio'
     form_class = BuscarConveniosForm
     form = BuscarConveniosForm
 
+    def dispatch(self, request, *args, **kwargs):
+        if self.request.session.get('paginate', True):
+            self.request.session['paginate'] = "10"
+        return super().dispatch(request, *args, **kwargs)
+
     def get(self, request, *args, **kwargs):
-        print('get')
+        self.paginate_by = self.request.session['paginate']
         self.form = BuscarConveniosForm(self.request.GET or None, )
 
         idEmp = EmpresaUsuario.objects.filter(usuario=self.request.user).values_list(
@@ -110,41 +133,80 @@ class ConvenioListado(LoginRequiredMixin, ListView, FormMixin):
         return super(ConvenioListado, self).get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        print('post')
+        if self.request.POST.get('paginate'):
+            self.request.session['paginate'] = self.request.POST.get('paginate')
+            self.paginate_by = self.request.session['paginate']
 
-        self.form = BuscarConveniosForm(self.request.POST or None)
-
-        if self.form.is_valid():
             idEmp = EmpresaUsuario.objects.filter(usuario=self.request.user).values_list(
                 'empresa__id', flat=True).first()
             idRol = Group.objects.filter(user=self.request.user).values_list('name', flat=True).first()
 
             if (idRol == 'CDA' or idRol == 'ADMIN'):
-                self.object_list = self.get_queryset().filter(nombre__icontains=self.form.cleaned_data['nombre'],
-                                                          apellido__icontains=self.form.cleaned_data['apellido'],
-                                                          documento__icontains=self.form.cleaned_data['documento'],
-                                                          fechaModificacion__gte=self.form.cleaned_data['fecha_inicio'],
-                                                          fechaModificacion__lte=self.form.cleaned_data['fecha_fin'])
+                self.object_list = self.get_queryset()
             else:
-                self.object_list = self.get_queryset().filter(nombre__icontains=self.form.cleaned_data['nombre'],
-                                                              apellido__icontains=self.form.cleaned_data['apellido'],
-                                                              documento__icontains=self.form.cleaned_data['documento'],
-                                                              fechaModificacion__gte=self.form.cleaned_data[
-                                                                  'fecha_inicio'],
-                                                              fechaModificacion__lte=self.form.cleaned_data[
-                                                                  'fecha_fin'], empresa__id=idEmp)
-            #allow_empty = self.get_allow_empty()
-            #if not allow_empty and len(self.object_list) == 0:
-            #    raise Http404((u"Empty list and '%(class_name)s.allow_empty' is False.")
-            #                  % {'class_name': self.__class__.__name__})
+                self.object_list = self.get_queryset().filter(empresa__id=idEmp)
 
             new_context = self.get_context_data(object_list=self.object_list, form=self.form)
             return self.render_to_response(new_context)
         else:
-            new_context = self.get_context_data(object_list=self.object_list, form=self.form)
-            return self.render_to_response(new_context)
-            #raise Http404((u"Empty list and '%(class_name)s.allow_empty' is xxx.")
-            #              % {'class_name': self.__class__.__name__})
+            self.form = BuscarConveniosForm(self.request.POST or None)
+
+            if self.form.is_valid():
+                idEmp = EmpresaUsuario.objects.filter(usuario=self.request.user).values_list(
+                    'empresa__id', flat=True).first()
+                idRol = Group.objects.filter(user=self.request.user).values_list('name', flat=True).first()
+
+                if (idRol == 'CDA' or idRol == 'ADMIN'):
+                    self.object_list = self.get_queryset().filter(nombre__icontains=self.form.cleaned_data['nombre'],
+                                                              apellido__icontains=self.form.cleaned_data['apellido'],
+                                                              documento__icontains=self.form.cleaned_data['documento'])
+
+
+                    if not self.form.cleaned_data['fecha_inicio'] is None:
+                        self.object_list = self.object_list.filter(fechaCreacion__gte=self.form.cleaned_data['fecha_inicio'])
+
+                    if not self.form.cleaned_data['fecha_fin'] is None:
+                        self.object_list = self.object_list.filter(fechaCreacion__lte=self.form.cleaned_data['fecha_fin'])
+
+                    if not self.form.cleaned_data['fecha_mod_inicio'] is None:
+                        self.object_list = self.object_list.filter(fechaModificacion__gte=self.form.cleaned_data['fecha_mod_inicio'])
+
+                    if not self.form.cleaned_data['fecha_mod_fin'] is None:
+                        self.object_list = self.object_list.filter(fechaModificacion__lte=self.form.cleaned_data['fecha_mod_fin'])
+
+                    if not self.form.cleaned_data['fecha_pago_inicio'] is None:
+                        self.object_list = self.object_list.filter(fechaCreacion__gte=self.form.cleaned_data['fecha_pago_inicio'])
+
+                    if not self.form.cleaned_data['fecha_pago_fin'] is None:
+                        self.object_list = self.object_list.filter(fechaCreacion__lte=self.form.cleaned_data['fecha_pago_fin'])
+
+                    if not self.form.cleaned_data['fecha_concilia_inicio'] is None:
+                        self.object_list = self.object_list.filter(
+                            fechaModificacion__gte=self.form.cleaned_data['fecha_concilia_inicio'])
+
+                    if not self.form.cleaned_data['fecha_concilia_fin'] is None:
+                        self.object_list = self.object_list.filter(
+                            fechaModificacion__lte=self.form.cleaned_data['fecha_concilia_fin'])
+
+                else:
+                    self.object_list = self.get_queryset().filter(nombre__icontains=self.form.cleaned_data['nombre'],
+                                                                  apellido__icontains=self.form.cleaned_data['apellido'],
+                                                                  documento__icontains=self.form.cleaned_data['documento'],
+                                                                  fechaModificacion__gte=self.form.cleaned_data['fecha_inicio'],
+                                                                  fechaModificacion__lte=self.form.cleaned_data['fecha_fin'],
+                                                                  empresa__id=idEmp)
+                #allow_empty = self.get_allow_empty()
+                #if not allow_empty and len(self.object_list) == 0:
+                #    raise Http404((u"Empty list and '%(class_name)s.allow_empty' is False.")
+                #                  % {'class_name': self.__class__.__name__})
+
+                new_context = self.get_context_data(object_list=self.object_list, form=self.form)
+                return self.render_to_response(new_context)
+            else:
+                new_context = self.get_context_data(object_list=self.object_list, form=self.form)
+                return self.render_to_response(new_context)
+                #raise Http404((u"Empty list and '%(class_name)s.allow_empty' is xxx.")
+                #              % {'class_name': self.__class__.__name__})
 
     def get_login_url(self):
         if not self.request.user.is_authenticated:
@@ -163,7 +225,6 @@ class ConvenioListado(LoginRequiredMixin, ListView, FormMixin):
         return False
 
     def _get_queryset(self):
-        print('query')
         groups = self.request.user.groups.all().values_list('name', flat=True)
         idEmp = EmpresaUsuario.objects.filter(usuario=self.request.user).values_list(
             'empresa__id', flat=True).first()
@@ -193,14 +254,21 @@ class ConvenioListado(LoginRequiredMixin, ListView, FormMixin):
 
         return new_context
 
-
-
-class ConvenioRevisados(LoginRequiredMixin, ListView):
+class ConvenioRevisados(LoginRequiredMixin, ListView, FormMixin):
     model = Conveniocda
-    paginate_by = 10
     context_object_name = 'convenio'
+    form_class = BuscarConveniosForm
+    form = BuscarConveniosForm
+
+    def dispatch(self, request, *args, **kwargs):
+        if self.request.session.get('paginate', True):
+            self.request.session['paginate'] = "10"
+        return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
+        self.paginate_by = self.request.session['paginate']
+        self.form = BuscarConveniosForm(self.request.GET or None, )
+
         idEmp = EmpresaUsuario.objects.filter(usuario=self.request.user).values_list(
             'empresa__id', flat=True).first()
         idRol = Group.objects.filter(user=self.request.user).values_list('name', flat=True).first()
@@ -213,12 +281,97 @@ class ConvenioRevisados(LoginRequiredMixin, ListView):
 
         return new_context
 
-class ConvenioPendiente(LoginRequiredMixin, ListView):
+    def post(self, request, *args, **kwargs):
+        if self.request.POST.get('paginate'):
+            self.request.session['paginate'] = self.request.POST.get('paginate')
+            self.paginate_by = self.request.session['paginate']
+
+            idEmp = EmpresaUsuario.objects.filter(usuario=self.request.user).values_list(
+                'empresa__id', flat=True).first()
+            idRol = Group.objects.filter(user=self.request.user).values_list('name', flat=True).first()
+
+            if (idRol == 'CDA' or idRol == 'ADMIN'):
+                self.object_list = self.get_queryset()
+            else:
+                self.object_list = self.get_queryset().filter(empresa__id=idEmp)
+
+            new_context = self.get_context_data(object_list=self.object_list, form=self.form)
+            return self.render_to_response(new_context)
+        else:
+            self.form = BuscarConveniosForm(self.request.POST or None)
+
+            if self.form.is_valid():
+                idEmp = EmpresaUsuario.objects.filter(usuario=self.request.user).values_list(
+                    'empresa__id', flat=True).first()
+                idRol = Group.objects.filter(user=self.request.user).values_list('name', flat=True).first()
+
+                if (idRol == 'CDA' or idRol == 'ADMIN'):
+                    self.object_list = self.get_queryset().filter(nombre__icontains=self.form.cleaned_data['nombre'],
+                                                              apellido__icontains=self.form.cleaned_data['apellido'],
+                                                              documento__icontains=self.form.cleaned_data['documento'])
+
+
+                    if not self.form.cleaned_data['fecha_inicio'] is None:
+                        self.object_list = self.object_list.filter(fechaCreacion__gte=self.form.cleaned_data['fecha_inicio'])
+
+                    if not self.form.cleaned_data['fecha_fin'] is None:
+                        self.object_list = self.object_list.filter(fechaCreacion__lte=self.form.cleaned_data['fecha_fin'])
+
+                    if not self.form.cleaned_data['fecha_mod_inicio'] is None:
+                        self.object_list = self.object_list.filter(fechaModificacion__gte=self.form.cleaned_data['fecha_mod_inicio'])
+
+                    if not self.form.cleaned_data['fecha_mod_fin'] is None:
+                        self.object_list = self.object_list.filter(fechaModificacion__lte=self.form.cleaned_data['fecha_mod_fin'])
+
+                    if not self.form.cleaned_data['fecha_pago_inicio'] is None:
+                        self.object_list = self.object_list.filter(fechaCreacion__gte=self.form.cleaned_data['fecha_pago_inicio'])
+
+                    if not self.form.cleaned_data['fecha_pago_fin'] is None:
+                        self.object_list = self.object_list.filter(fechaCreacion__lte=self.form.cleaned_data['fecha_pago_fin'])
+
+                    if not self.form.cleaned_data['fecha_concilia_inicio'] is None:
+                        self.object_list = self.object_list.filter(
+                            fechaModificacion__gte=self.form.cleaned_data['fecha_concilia_inicio'])
+
+                    if not self.form.cleaned_data['fecha_concilia_fin'] is None:
+                        self.object_list = self.object_list.filter(
+                            fechaModificacion__lte=self.form.cleaned_data['fecha_concilia_fin'])
+
+                else:
+                    self.object_list = self.get_queryset().filter(nombre__icontains=self.form.cleaned_data['nombre'],
+                                                                  apellido__icontains=self.form.cleaned_data['apellido'],
+                                                                  documento__icontains=self.form.cleaned_data['documento'],
+                                                                  fechaModificacion__gte=self.form.cleaned_data['fecha_inicio'],
+                                                                  fechaModificacion__lte=self.form.cleaned_data['fecha_fin'],
+                                                                  empresa__id=idEmp)
+                #allow_empty = self.get_allow_empty()
+                #if not allow_empty and len(self.object_list) == 0:
+                #    raise Http404((u"Empty list and '%(class_name)s.allow_empty' is False.")
+                #                  % {'class_name': self.__class__.__name__})
+
+                new_context = self.get_context_data(object_list=self.object_list, form=self.form)
+                return self.render_to_response(new_context)
+            else:
+                new_context = self.get_context_data(object_list=self.object_list, form=self.form)
+                return self.render_to_response(new_context)
+                #raise Http404((u"Empty list and '%(class_name)s.allow_empty' is xxx.")
+                #              % {'class_name': self.__class__.__name__})
+
+class ConvenioPendiente(LoginRequiredMixin, ListView, FormMixin):
     model = Conveniocda
-    paginate_by = 10
     context_object_name = 'convenio'
+    form_class = BuscarConveniosForm
+    form = BuscarConveniosForm
+
+    def dispatch(self, request, *args, **kwargs):
+        if self.request.session.get('paginate', True):
+            self.request.session['paginate'] = "10"
+        return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
+        self.paginate_by = self.request.session['paginate']
+        self.form = BuscarConveniosForm(self.request.GET or None, )
+
         idEmp = EmpresaUsuario.objects.filter(usuario=self.request.user).values_list(
             'empresa__id', flat=True).first()
 
@@ -281,14 +434,14 @@ class ConvenioDetalle(LoginRequiredMixin, DetailView):
 
 class ConvenioActualizar(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
     model = Conveniocda
-    form = Conveniocda
-    fields = ['nombre', 'apellido', 'documento', 'telefono', 'placa', 'valor', 'tipodocumento',
-              'tipovehiculo']
+    form = UpdateConveniosForm
+    form_class = UpdateConveniosForm
 
-    success_message = 'Referido actualizado correctamente'
+    success_message = 'Convenio actualizado correctamente'
 
     def get_success_url(self):
         return reverse('leer')
+
 
 class ConvenioEliminar(LoginRequiredMixin, SuccessMessageMixin, DeleteView):
     model = Conveniocda

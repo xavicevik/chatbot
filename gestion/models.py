@@ -118,6 +118,8 @@ class Conveniocda(models.Model):
     observaciones = models.CharField(max_length=500)
     fechaCreacion = models.DateTimeField(auto_now_add=True)
     fechaModificacion = models.DateTimeField(auto_now_add=False)
+    fechaPago = models.DateTimeField(auto_now_add=False, null=True)
+    fechaConciliacion = models.DateTimeField(auto_now_add=False, null=True)
     creador = models.ForeignKey(settings.AUTH_USER_MODEL, default=1, on_delete=models.CASCADE)
 
     def save(self, *args, **kwargs):
@@ -132,6 +134,10 @@ class Conveniocda(models.Model):
 
     def __unicode__(self):
         return self.title
+
+    @property
+    def full_name(self):
+        return "%s %s" % (self.nombre, self.apellido)
 
     class Meta:
         db_table = 'conveniocda'
