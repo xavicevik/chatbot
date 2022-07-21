@@ -1,0 +1,39 @@
+{% load static %}
+    <div class="sidebar sidebar-dark sidebar-fixed" id="sidebar">
+      <div class="sidebar-brand d-none d-md-flex">
+          <img src="{% static 'assets/img/logoside.jpg' %}" class="side bar-brand-full" width="100%" alt="Logo"></img>
+      </div>
+      <ul class="sidebar-nav" data-coreui="navigation" data-simplebar="">
+        <li class="nav-item"><a class="nav-link" href="{% url 'leer' %}">
+            <svg class="nav-icon">
+              <use xlink:href="/static/assets/vendors/@coreui/icons/svg/free.svg#cil-home"></use>
+            </svg> Home</a></li>
+        <li class="nav-title">CONVENIOS</li>
+       {% if request.user.groups.all.0.name == 'EMPRESA' or request.user.groups.all.0.name == 'CDA' or request.user.groups.all.0.name == 'ADMIN'%}
+        <li class="nav-item"><a class="nav-link" href="{% url 'pendientes' %}">
+            <svg class="nav-icon">
+              <use xlink:href="/static/assets/vendors/@coreui/icons/svg/free.svg#cil-task"></use>
+            </svg> Pendientes</a></li>
+       {% endif %}
+       {% if request.user.groups.all.0.name == 'EMPRESA' or request.user.groups.all.0.name == 'CDA' or request.user.groups.all.0.name == 'ADMIN'%}
+        <li class="nav-item"><a class="nav-link" href="{% url 'revisados' %}">
+            <svg class="nav-icon">
+              <use xlink:href="/static/assets/vendors/@coreui/icons/svg/free.svg#cil-check-alt"></use>
+            </svg> Revisados</a></li>
+       {% endif %}
+       {% if request.user.groups.all.0.name == 'EMPRESA' or request.user.groups.all.0.name == 'ADMIN'%}
+        <li class="nav-item"><a class="nav-link" href="{% url 'crear' %}">
+            <svg class="nav-icon">
+              <use xlink:href="/static/assets/vendors/@coreui/icons/svg/free.svg#cil-pencil"></use>
+            </svg> Nuevo</a></li>
+      {% endif %}
+        {% if request.user.groups.all.0.name == 'EMPRESA' or request.user.groups.all.0.name == 'ADMIN' %}
+         <li class="nav-item" {% if request.resolver_match.url_name == "leer" %}active{% endif %}><a class="nav-link" href="{% url 'leer' %}">
+            <svg class="nav-icon">
+              <use xlink:href="/static/assets/vendors/@coreui/icons/svg/free.svg#cil-user"></use>
+            </svg> Admin</a></li>
+        {% endif %}
+      </ul>
+      <button class="sidebar-toggler" type="button" data-coreui-toggle="unfoldable"></button>
+    </div>
+    

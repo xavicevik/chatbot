@@ -14,7 +14,7 @@
         <div class="container1 text-center">
 
             <div class="center m-4" align="center col-md-12" >
-                    <form method="post" action="{% url 'leer' %}" enctype="multipart/form-data">
+                    <form method="post" action="{% url 'revisados' %}" enctype="multipart/form-data">
                     {% csrf_token %}
                         <!-- {% bootstrap_form form %} -->
 
@@ -76,7 +76,7 @@
                 </ul>
                 {% endif %}
 
-              <form method="POST" action="{% url 'leer' %}">
+              <form method="POST" action="{% url 'revisados' %}">
                   {% csrf_token %}
                 <div align="right" class="mb-3 flex-column">
                    <label>Mostrar:</label>
