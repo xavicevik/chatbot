@@ -130,7 +130,7 @@ class Conveniocda(models.Model):
         return super(Conveniocda, self).save(*args, **kwargs)
 
     def __srt__(self):
-        return self.nombre
+        return self.nombre + ' ' + self.apellido
 
     def __unicode__(self):
         return self.title
