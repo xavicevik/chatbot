@@ -23,6 +23,8 @@ from rest_framework import permissions
 from .serializers import UserSerializer, GroupSerializer, ConveniosSerializers, EmpresasSerializers, TiposdocumentoSerializers
 from django.contrib.auth.models import User, Group
 
+from django.db.models import Q
+
 from django.conf import settings
 from django.core.mail import send_mail
 
@@ -88,7 +90,7 @@ class BuscarConveniosForm(forms.ModelForm):
 
     class Meta:
         model = Conveniocda
-        fields = ['nombre', 'apellido', 'documento', 'placa']
+        fields = ['nombre', 'apellido', 'documento', 'placa', 'empresa']
 
 class UpdateConveniosForm(forms.ModelForm):
     nombre = forms.CharField(required=False, widget=forms.TextInput(attrs={'placeholder': 'Nombre'}))
@@ -157,10 +159,10 @@ class ConvenioListado(LoginRequiredMixin, ListView, FormMixin):
                     'empresa__id', flat=True).first()
                 idRol = Group.objects.filter(user=self.request.user).values_list('name', flat=True).first()
 
-                self.object_list = self.get_queryset().filter(nombre__icontains=self.form.cleaned_data['nombre'],
-                                                          apellido__icontains=self.form.cleaned_data['apellido'],
-                                                          documento__icontains=self.form.cleaned_data['documento'],
-                                                          placa__icontains=self.form.cleaned_data['placa'])
+                self.object_list = self.get_queryset().filter(Q(nombre__icontains=self.form.cleaned_data['nombre']) | Q(apellido__icontains=self.form.cleaned_data['nombre']),
+                                                              documento__icontains=self.form.cleaned_data['documento'],
+                                                              empresa=self.form.cleaned_data['empresa'],
+                                                              placa__icontains=self.form.cleaned_data['placa'])
 
                 if not self.form.cleaned_data['fecha_inicio'] is None:
                     self.object_list = self.object_list.filter(fechaCreacion__gte=self.form.cleaned_data['fecha_inicio'])
@@ -302,10 +304,11 @@ class ConvenioRevisados(LoginRequiredMixin, ListView, FormMixin):
                 else:
                     self.object_list = Conveniocda.objects.filter(estado_id=4, empresa__id=idEmp)
 
-                self.object_list = self.object_list.filter(nombre__icontains=self.form.cleaned_data['nombre'],
-                                                              apellido__icontains=self.form.cleaned_data['apellido'],
-                                                              documento__icontains=self.form.cleaned_data['documento'],
-                                                              placa__icontains=self.form.cleaned_data['placa'])
+                self.object_list = self.object_list.filter(Q(nombre__icontains=self.form.cleaned_data['nombre']) | Q(
+                                                           apellido__icontains=self.form.cleaned_data['nombre']),
+                                                           documento__icontains=self.form.cleaned_data['documento'],
+                                                           empresa=self.form.cleaned_data['empresa'],
+                                                           placa__icontains=self.form.cleaned_data['placa'])
 
                 if not self.form.cleaned_data['fecha_inicio'] is None:
                     self.object_list = self.object_list.filter(
@@ -406,9 +409,10 @@ class ConvenioPendiente(LoginRequiredMixin, ListView, FormMixin):
                 else:
                     self.object_list = Conveniocda.objects.filter(estado_id=1, empresa__id=idEmp)
 
-                self.object_list = self.object_list.filter(nombre__icontains=self.form.cleaned_data['nombre'],
-                                                              apellido__icontains=self.form.cleaned_data['apellido'],
+                self.object_list = self.object_list.filter(Q(nombre__icontains=self.form.cleaned_data['nombre']) | Q(
+                                                              apellido__icontains=self.form.cleaned_data['nombre']),
                                                               documento__icontains=self.form.cleaned_data['documento'],
+                                                              empresa=self.form.cleaned_data['empresa'],
                                                               placa__icontains=self.form.cleaned_data['placa'])
 
                 if not self.form.cleaned_data['fecha_inicio'] is None:
@@ -455,7 +459,7 @@ class ConvenioCrear(LoginRequiredMixin, SuccessMessageMixin, CreateView):
     model = Conveniocda
     form = Conveniocda
     fields = ['nombre', 'apellido', 'documento', 'telefono','placa','tipodocumento','tipovehiculo', 'revision']
-    success_message = "Convenio cda creado correctamente"
+    success_message = "Convenio CDA creado correctamente"
 
     def form_valid(self, form):
         idEmp = EmpresaUsuario.objects.filter(usuario=self.request.user).values_list(
