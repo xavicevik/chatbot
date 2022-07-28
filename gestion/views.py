@@ -79,6 +79,7 @@ class BuscarConveniosForm(forms.ModelForm):
     apellido = forms.CharField(required=False, widget=forms.TextInput(attrs={'placeholder': 'Apellido'}))
     documento = forms.CharField(required=False, widget=forms.TextInput(attrs={'placeholder': 'Documento'}))
     placa = forms.CharField(required=False, widget=forms.TextInput(attrs={'placeholder': 'Placa'}))
+    empresa = forms.ModelChoiceField(required=False, queryset=Empresas.objects.all())
     fecha_inicio = forms.DateField(required=False, widget=DatePickerInput(format='%m/%d/%Y', attrs={'placeholder': 'Fecha Inicio Creación'}))
     fecha_fin = forms.DateField(required=False, widget=DatePickerInput(format='%m/%d/%Y', attrs={'placeholder': 'Fecha Fin Creación'}))
     fecha_mod_inicio = forms.DateField(required=False, widget=DatePickerInput(format='%m/%d/%Y', attrs={'placeholder': 'Fecha Inicio Modificación'}))
@@ -161,8 +162,10 @@ class ConvenioListado(LoginRequiredMixin, ListView, FormMixin):
 
                 self.object_list = self.get_queryset().filter(Q(nombre__icontains=self.form.cleaned_data['nombre']) | Q(apellido__icontains=self.form.cleaned_data['nombre']),
                                                               documento__icontains=self.form.cleaned_data['documento'],
-                                                              empresa=self.form.cleaned_data['empresa'],
                                                               placa__icontains=self.form.cleaned_data['placa'])
+
+                if not self.form.cleaned_data['empresa'] is None:
+                    self.object_list = self.object_list.filter(empresa = self.form.cleaned_data['empresa'])
 
                 if not self.form.cleaned_data['fecha_inicio'] is None:
                     self.object_list = self.object_list.filter(fechaCreacion__gte=self.form.cleaned_data['fecha_inicio'])
@@ -307,8 +310,10 @@ class ConvenioRevisados(LoginRequiredMixin, ListView, FormMixin):
                 self.object_list = self.object_list.filter(Q(nombre__icontains=self.form.cleaned_data['nombre']) | Q(
                                                            apellido__icontains=self.form.cleaned_data['nombre']),
                                                            documento__icontains=self.form.cleaned_data['documento'],
-                                                           empresa=self.form.cleaned_data['empresa'],
                                                            placa__icontains=self.form.cleaned_data['placa'])
+
+                if not self.form.cleaned_data['empresa'] is None:
+                    self.object_list = self.object_list.filter(empresa = self.form.cleaned_data['empresa'])
 
                 if not self.form.cleaned_data['fecha_inicio'] is None:
                     self.object_list = self.object_list.filter(
@@ -412,8 +417,10 @@ class ConvenioPendiente(LoginRequiredMixin, ListView, FormMixin):
                 self.object_list = self.object_list.filter(Q(nombre__icontains=self.form.cleaned_data['nombre']) | Q(
                                                               apellido__icontains=self.form.cleaned_data['nombre']),
                                                               documento__icontains=self.form.cleaned_data['documento'],
-                                                              empresa=self.form.cleaned_data['empresa'],
                                                               placa__icontains=self.form.cleaned_data['placa'])
+
+                if not self.form.cleaned_data['empresa'] is None:
+                    self.object_list = self.object_list.filter(empresa = self.form.cleaned_data['empresa'])
 
                 if not self.form.cleaned_data['fecha_inicio'] is None:
                     self.object_list = self.object_list.filter(
