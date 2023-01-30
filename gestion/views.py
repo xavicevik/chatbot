@@ -1,5 +1,6 @@
 # Create your views here.
 import datetime
+from datetime import datetime
 
 from django.views.generic import ListView, DetailView, FormView
 from django.views.generic.edit import ModelFormMixin
@@ -24,6 +25,11 @@ from .serializers import UserSerializer, GroupSerializer, ConveniosSerializers, 
 from django.contrib.auth.models import User, Group
 
 from django.db.models import Q
+
+import django_excel as excel
+
+#from models import Document
+#from forms import DocumentForm
 
 from django.conf import settings
 from django.core.mail import send_mail
@@ -129,80 +135,126 @@ class ConvenioListado(LoginRequiredMixin, ListView, FormMixin):
         idRol = Group.objects.filter(user=self.request.user).values_list('name', flat=True).first()
 
         if (idRol == 'CDA' or idRol == 'ADMIN'):
-            new_context = Conveniocda.objects.filter(nombre__icontains='')
+            self.object_list = Conveniocda.objects.filter(nombre__icontains='').order_by('-id')
         else:
-            new_context = Conveniocda.objects.filter(nombre__icontains='', empresa__id=idEmp)
-        self.queryset = new_context
+            self.object_list = Conveniocda.objects.filter(nombre__icontains='', empresa__id=idEmp).order_by('-id')
 
-        return super(ConvenioListado, self).get(request, *args, **kwargs)
+        if not self.request.GET.get('nombre') is None:
+            self.object_list = self.object_list.filter(nombre__icontains=self.request.GET.get('nombre'))
+
+        if not self.request.GET.get('documento') is None:
+            self.object_list = self.object_list.filter(documento__icontains=self.request.GET.get('documento'))
+
+        if not self.request.GET.get('placa') is None:
+            self.object_list = self.object_list.filter(placa__icontains=self.request.GET.get('placa'))
+
+        if not self.request.GET.get('empresa') is None:
+            self.object_list = self.object_list.filter(empresa=self.request.GET.get('empresa'))
+
+        if not self.request.GET.get('fecha_inicio') is None:
+            temp_date = datetime.strptime(self.request.GET.get('fecha_inicio'), "%m/%d/%Y").date()
+            self.form.fecha_inicio = temp_date
+            self.object_list = self.object_list.filter(
+                fechaCreacion__gte=self.form.fecha_inicio)
+
+        if not self.request.GET.get('fecha_fin') is None:
+            temp_date = datetime.strptime(self.request.GET.get('fecha_fin'), "%m/%d/%Y").date()
+            self.form.fecha_fin = temp_date
+            self.object_list = self.object_list.filter(
+                fechaCreacion__lte=self.form.fecha_fin)
+
+        if not self.request.GET.get('fecha_mod_inicio') is None:
+            temp_date = datetime.strptime(self.request.GET.get('fecha_mod_inicio'), "%m/%d/%Y").date()
+            self.form.fecha_mod_inicio = temp_date
+            self.object_list = self.object_list.filter(
+                fechaCreacion__gte=self.form.fecha_mod_inicio)
+
+        if not self.request.GET.get('fecha_mod_fin') is None:
+            temp_date = datetime.strptime(self.request.GET.get('fecha_mod_fin'), "%m/%d/%Y").date()
+            self.form.fecha_mod_fin = temp_date
+            self.object_list = self.object_list.filter(
+                fechaCreacion__lte=self.form.fecha_mod_fin)
+
+        if not self.request.GET.get('fecha_pago_inicio') is None:
+            temp_date = datetime.strptime(self.request.GET.get('fecha_pago_inicio'), "%m/%d/%Y").date()
+            self.form.fecha_pago_inicio = temp_date
+            self.object_list = self.object_list.filter(
+                fechaCreacion__gte=self.form.fecha_pago_inicio)
+
+        if not self.request.GET.get('fecha_pago_fin') is None:
+            temp_date = datetime.strptime(self.request.GET.get('fecha_pago_fin'), "%m/%d/%Y").date()
+            self.form.fecha_pago_fin = temp_date
+            self.object_list = self.object_list.filter(
+                fechaCreacion__lte=self.form.fecha_pago_fin)
+
+        if not self.request.GET.get('fecha_concilia_inicio') is None:
+            temp_date = datetime.strptime(self.request.GET.get('fecha_concilia_inicio'), "%m/%d/%Y").date()
+            self.form.fecha_concilia_inicio = temp_date
+            self.object_list = self.object_list.filter(
+                fechaCreacion__gte=self.form.fecha_concilia_inicio)
+
+        if not self.request.GET.get('fecha_concilia_fin') is None:
+            temp_date = datetime.strptime(self.request.GET.get('fecha_concilia_fin'), "%m/%d/%Y").date()
+            self.form.fecha_concilia_fin = temp_date
+            self.object_list = self.object_list.filter(
+                fechaCreacion__lte=self.form.fecha_concilia_fin)
+
+        new_context = self.get_context_data(object_list=self.object_list, form=self.form)
+        return self.render_to_response(new_context)
 
     def post(self, request, *args, **kwargs):
-        if int(self.request.POST.get('paginate', 0)) > 0:
-            self.request.session['paginate'] = self.request.POST.get('paginate')
-            self.paginate_by = self.request.session['paginate']
+        self.request.session['paginate'] = self.request.POST.get('paginate')
+        self.paginate_by = self.request.session['paginate']
+        self.form = BuscarConveniosForm(self.request.POST or None)
 
+        if self.form.is_valid():
             idEmp = EmpresaUsuario.objects.filter(usuario=self.request.user).values_list(
                 'empresa__id', flat=True).first()
             idRol = Group.objects.filter(user=self.request.user).values_list('name', flat=True).first()
 
-            if (idRol == 'CDA' or idRol == 'ADMIN'):
-                self.object_list = self.get_queryset()
-            else:
-                self.object_list = self.get_queryset().filter(empresa__id=idEmp)
+            self.object_list = self.get_queryset().filter(Q(nombre__icontains=self.form.cleaned_data['nombre']) | Q(apellido__icontains=self.form.cleaned_data['nombre']),
+                                                          documento__icontains=self.form.cleaned_data['documento'],
+                                                          placa__icontains=self.form.cleaned_data['placa']).order_by('-id')
+
+            if not self.form.cleaned_data['empresa'] is None:
+                self.object_list = self.object_list.filter(empresa = self.form.cleaned_data['empresa'])
+
+            if not self.form.cleaned_data['fecha_inicio'] is None:
+                self.object_list = self.object_list.filter(fechaCreacion__gte=self.form.cleaned_data['fecha_inicio'])
+
+            if not self.form.cleaned_data['fecha_fin'] is None:
+                self.object_list = self.object_list.filter(fechaCreacion__lte=self.form.cleaned_data['fecha_fin'])
+
+            if not self.form.cleaned_data['fecha_mod_inicio'] is None:
+                self.object_list = self.object_list.filter(fechaModificacion__gte=self.form.cleaned_data['fecha_mod_inicio'])
+
+            if not self.form.cleaned_data['fecha_mod_fin'] is None:
+                self.object_list = self.object_list.filter(fechaModificacion__lte=self.form.cleaned_data['fecha_mod_fin'])
+
+            if not self.form.cleaned_data['fecha_pago_inicio'] is None:
+                self.object_list = self.object_list.filter(fechaCreacion__gte=self.form.cleaned_data['fecha_pago_inicio'])
+
+            if not self.form.cleaned_data['fecha_pago_fin'] is None:
+                self.object_list = self.object_list.filter(fechaCreacion__lte=self.form.cleaned_data['fecha_pago_fin'])
+
+            if not self.form.cleaned_data['fecha_concilia_inicio'] is None:
+                self.object_list = self.object_list.filter(
+                    fechaModificacion__gte=self.form.cleaned_data['fecha_concilia_inicio'])
+
+            if not self.form.cleaned_data['fecha_concilia_fin'] is None:
+                self.object_list = self.object_list.filter(
+                    fechaModificacion__lte=self.form.cleaned_data['fecha_concilia_fin'])
+
+            if (idRol != 'CDA' and idRol != 'ADMIN'):
+                self.object_list = self.object_list.filter(empresa__id = idEmp)
 
             new_context = self.get_context_data(object_list=self.object_list, form=self.form)
             return self.render_to_response(new_context)
         else:
-            self.form = BuscarConveniosForm(self.request.POST or None)
-
-            if self.form.is_valid():
-                idEmp = EmpresaUsuario.objects.filter(usuario=self.request.user).values_list(
-                    'empresa__id', flat=True).first()
-                idRol = Group.objects.filter(user=self.request.user).values_list('name', flat=True).first()
-
-                self.object_list = self.get_queryset().filter(Q(nombre__icontains=self.form.cleaned_data['nombre']) | Q(apellido__icontains=self.form.cleaned_data['nombre']),
-                                                              documento__icontains=self.form.cleaned_data['documento'],
-                                                              placa__icontains=self.form.cleaned_data['placa'])
-
-                if not self.form.cleaned_data['empresa'] is None:
-                    self.object_list = self.object_list.filter(empresa = self.form.cleaned_data['empresa'])
-
-                if not self.form.cleaned_data['fecha_inicio'] is None:
-                    self.object_list = self.object_list.filter(fechaCreacion__gte=self.form.cleaned_data['fecha_inicio'])
-
-                if not self.form.cleaned_data['fecha_fin'] is None:
-                    self.object_list = self.object_list.filter(fechaCreacion__lte=self.form.cleaned_data['fecha_fin'])
-
-                if not self.form.cleaned_data['fecha_mod_inicio'] is None:
-                    self.object_list = self.object_list.filter(fechaModificacion__gte=self.form.cleaned_data['fecha_mod_inicio'])
-
-                if not self.form.cleaned_data['fecha_mod_fin'] is None:
-                    self.object_list = self.object_list.filter(fechaModificacion__lte=self.form.cleaned_data['fecha_mod_fin'])
-
-                if not self.form.cleaned_data['fecha_pago_inicio'] is None:
-                    self.object_list = self.object_list.filter(fechaCreacion__gte=self.form.cleaned_data['fecha_pago_inicio'])
-
-                if not self.form.cleaned_data['fecha_pago_fin'] is None:
-                    self.object_list = self.object_list.filter(fechaCreacion__lte=self.form.cleaned_data['fecha_pago_fin'])
-
-                if not self.form.cleaned_data['fecha_concilia_inicio'] is None:
-                    self.object_list = self.object_list.filter(
-                        fechaModificacion__gte=self.form.cleaned_data['fecha_concilia_inicio'])
-
-                if not self.form.cleaned_data['fecha_concilia_fin'] is None:
-                    self.object_list = self.object_list.filter(
-                        fechaModificacion__lte=self.form.cleaned_data['fecha_concilia_fin'])
-
-                if (idRol != 'CDA' and idRol != 'ADMIN'):
-                    self.object_list = self.object_list.filter(empresa__id = idEmp)
-
-                new_context = self.get_context_data(object_list=self.object_list, form=self.form)
-                return self.render_to_response(new_context)
-            else:
-                new_context = self.get_context_data(object_list=self.object_list, form=self.form)
-                return self.render_to_response(new_context)
-                #raise Http404((u"Empty list and '%(class_name)s.allow_empty' is xxx.")
-                #              % {'class_name': self.__class__.__name__})
+            new_context = self.get_context_data(object_list=self.object_list, form=self.form)
+            return self.render_to_response(new_context)
+            #raise Http404((u"Empty list and '%(class_name)s.allow_empty' is xxx.")
+            #              % {'class_name': self.__class__.__name__})
 
     def get_login_url(self):
         if not self.request.user.is_authenticated:
@@ -211,44 +263,6 @@ class ConvenioListado(LoginRequiredMixin, ListView, FormMixin):
         # El usuario está logueado pero no está autorizado
         return '/no_autorizado/'
 
-    def _test_func(self):
-        # obtenemos todos los grupos del usuario logueado
-        grupos = self.request.user.groups.all()
-        # comparamos que el usuario pertenezca al grupo VENDEDOR o SUPERVISOR
-        for grupo in grupos:
-            if grupo in ['CDA', 'SUPERVISOR']:
-                return True
-        return False
-
-    def _get_queryset(self):
-        groups = self.request.user.groups.all().values_list('name', flat=True)
-        idEmp = EmpresaUsuario.objects.filter(usuario=self.request.user).values_list(
-            'empresa__id', flat=True).first()
-
-        idRol = Group.objects.filter(user=self.request.user).values_list('name', flat=True).first()
-
-        if self.request.GET:
-            if (idRol == 'CDA' or idRol == 'ADMIN'):
-                filter_val = self.request.GET.get('filter', 'give-default-value')
-                new_context = Conveniocda.objects.filter(nombre__icontains=filter_val) | \
-                              Conveniocda.objects.filter(apellido__icontains=filter_val) | \
-                              Conveniocda.objects.filter(placa__icontains=filter_val) | \
-                              Conveniocda.objects.filter(documento__icontains=filter_val) | \
-                              Conveniocda.objects.filter(estado__nombre__icontains=filter_val)
-            else:
-                filter_val = self.request.GET.get('filter', 'give-default-value')
-                new_context = Conveniocda.objects.filter(nombre__icontains=filter_val, empresa__id=idEmp) | \
-                              Conveniocda.objects.filter(apellido__icontains=filter_val, empresa__id=idEmp) | \
-                              Conveniocda.objects.filter(placa__icontains=filter_val, empresa__id=idEmp) | \
-                              Conveniocda.objects.filter(documento__icontains=filter_val, empresa__id=idEmp) | \
-                              Conveniocda.objects.filter(estado__nombre__icontains=filter_val, empresa__id=idEmp)
-        else:
-            if (idRol == 'CDA' or idRol == 'ADMIN'):
-                new_context = Conveniocda.objects.filter(nombre__icontains='')
-            else:
-                new_context = Conveniocda.objects.filter(nombre__icontains='', empresa__id=idEmp)
-
-        return new_context
 
 class ConvenioRevisados(LoginRequiredMixin, ListView, FormMixin):
     model = Conveniocda
@@ -262,98 +276,146 @@ class ConvenioRevisados(LoginRequiredMixin, ListView, FormMixin):
             self.request.session['paginate'] = 10
         return super().dispatch(request, *args, **kwargs)
 
-    def get_queryset(self):
+    def get(self, request, *args, **kwargs):
         self.paginate_by = self.request.session['paginate']
         self.form = BuscarConveniosForm(self.request.GET or None, )
 
         idEmp = EmpresaUsuario.objects.filter(usuario=self.request.user).values_list(
             'empresa__id', flat=True).first()
+
         idRol = Group.objects.filter(user=self.request.user).values_list('name', flat=True).first()
 
-        filter_val = self.request.GET.get('filter', 'give-default-value')
         if (idRol == 'CDA' or idRol == 'ADMIN'):
-            new_context = Conveniocda.objects.filter(estado_id=4)
+            self.object_list = Conveniocda.objects.filter(nombre__icontains='', estado_id=4).order_by('-id')
         else:
-            new_context = Conveniocda.objects.filter(estado_id = 4, empresa__id=idEmp)
+            self.object_list = Conveniocda.objects.filter(nombre__icontains='', estado_id=4, empresa__id=idEmp).order_by('-id')
 
-        return new_context
+        if not self.request.GET.get('nombre') is None:
+            self.object_list = self.object_list.filter(nombre__icontains=self.request.GET.get('nombre'))
+
+        if not self.request.GET.get('documento') is None:
+            self.object_list = self.object_list.filter(documento__icontains=self.request.GET.get('documento'))
+
+        if not self.request.GET.get('placa') is None:
+            self.object_list = self.object_list.filter(placa__icontains=self.request.GET.get('placa'))
+
+        if not self.request.GET.get('empresa') is None:
+            self.object_list = self.object_list.filter(empresa=self.request.GET.get('empresa'))
+
+
+        if not self.request.GET.get('fecha_inicio') is None:
+            temp_date = datetime.strptime(self.request.GET.get('fecha_inicio'), "%m/%d/%Y").date()
+            self.form.fecha_inicio = temp_date
+            self.object_list = self.object_list.filter(
+                fechaCreacion__gte=self.form.fecha_inicio)
+
+        if not self.request.GET.get('fecha_fin') is None:
+            temp_date = datetime.strptime(self.request.GET.get('fecha_fin'), "%m/%d/%Y").date()
+            self.form.fecha_fin = temp_date
+            self.object_list = self.object_list.filter(
+                fechaCreacion__lte=self.form.fecha_fin)
+
+        if not self.request.GET.get('fecha_mod_inicio') is None:
+            temp_date = datetime.strptime(self.request.GET.get('fecha_mod_inicio'), "%m/%d/%Y").date()
+            self.form.fecha_mod_inicio = temp_date
+            self.object_list = self.object_list.filter(
+                fechaCreacion__gte=self.form.fecha_mod_inicio)
+
+        if not self.request.GET.get('fecha_mod_fin') is None:
+            temp_date = datetime.strptime(self.request.GET.get('fecha_mod_fin'), "%m/%d/%Y").date()
+            self.form.fecha_mod_fin = temp_date
+            self.object_list = self.object_list.filter(
+                fechaCreacion__lte=self.form.fecha_mod_fin)
+
+        if not self.request.GET.get('fecha_pago_inicio') is None:
+            temp_date = datetime.strptime(self.request.GET.get('fecha_pago_inicio'), "%m/%d/%Y").date()
+            self.form.fecha_pago_inicio = temp_date
+            self.object_list = self.object_list.filter(
+                fechaCreacion__gte=self.form.fecha_pago_inicio)
+
+        if not self.request.GET.get('fecha_pago_fin') is None:
+            temp_date = datetime.strptime(self.request.GET.get('fecha_pago_fin'), "%m/%d/%Y").date()
+            self.form.fecha_pago_fin = temp_date
+            self.object_list = self.object_list.filter(
+                fechaCreacion__lte=self.form.fecha_pago_fin)
+
+        if not self.request.GET.get('fecha_concilia_inicio') is None:
+            temp_date = datetime.strptime(self.request.GET.get('fecha_concilia_inicio'), "%m/%d/%Y").date()
+            self.form.fecha_concilia_inicio = temp_date
+            self.object_list = self.object_list.filter(
+                fechaCreacion__gte=self.form.fecha_concilia_inicio)
+
+        if not self.request.GET.get('fecha_concilia_fin') is None:
+            temp_date = datetime.strptime(self.request.GET.get('fecha_concilia_fin'), "%m/%d/%Y").date()
+            self.form.fecha_concilia_fin = temp_date
+            self.object_list = self.object_list.filter(
+                fechaCreacion__lte=self.form.fecha_concilia_fin)
+
+        new_context = self.get_context_data(object_list=self.object_list, form=self.form)
+        return self.render_to_response(new_context)
 
     def post(self, request, *args, **kwargs):
-        if int(self.request.POST.get('paginate', 0)) > 0:
-            self.request.session['paginate'] = self.request.POST.get('paginate')
-            self.paginate_by = self.request.session['paginate']
+        self.request.session['paginate'] = self.request.POST.get('paginate')
+        self.paginate_by = self.request.session['paginate']
+        self.form = BuscarConveniosForm(self.request.POST or None)
 
+        if self.form.is_valid():
             idEmp = EmpresaUsuario.objects.filter(usuario=self.request.user).values_list(
                 'empresa__id', flat=True).first()
             idRol = Group.objects.filter(user=self.request.user).values_list('name', flat=True).first()
 
             if (idRol == 'CDA' or idRol == 'ADMIN'):
-                self.object_list = Conveniocda.objects.filter(estado_id=4)
+                self.object_list = self.get_queryset().filter(estado_id=4).order_by('-id')
             else:
-                self.object_list = Conveniocda.objects.filter(estado_id=4, empresa__id=idEmp)
+                self.object_list = self.get_queryset().filter(empresa__id=idEmp, estado_id=4).order_by('-id')
+
+            self.object_list = self.object_list.filter(Q(nombre__icontains=self.form.cleaned_data['nombre']) | Q(
+                                                          apellido__icontains=self.form.cleaned_data['nombre']),
+                                                          documento__icontains=self.form.cleaned_data['documento'],
+                                                          placa__icontains=self.form.cleaned_data['placa'])
+
+            if not self.form.cleaned_data['empresa'] is None:
+                self.object_list = self.object_list.filter(empresa = self.form.cleaned_data['empresa'])
+
+            if not self.form.cleaned_data['fecha_inicio'] is None:
+                self.object_list = self.object_list.filter(
+                    fechaCreacion__gte=self.form.cleaned_data['fecha_inicio'])
+
+            if not self.form.cleaned_data['fecha_fin'] is None:
+                self.object_list = self.object_list.filter(fechaCreacion__lte=self.form.cleaned_data['fecha_fin'])
+
+            if not self.form.cleaned_data['fecha_mod_inicio'] is None:
+                self.object_list = self.object_list.filter(
+                    fechaModificacion__gte=self.form.cleaned_data['fecha_mod_inicio'])
+
+            if not self.form.cleaned_data['fecha_mod_fin'] is None:
+                self.object_list = self.object_list.filter(
+                    fechaModificacion__lte=self.form.cleaned_data['fecha_mod_fin'])
+
+            if not self.form.cleaned_data['fecha_pago_inicio'] is None:
+                self.object_list = self.object_list.filter(
+                    fechaCreacion__gte=self.form.cleaned_data['fecha_pago_inicio'])
+
+            if not self.form.cleaned_data['fecha_pago_fin'] is None:
+                self.object_list = self.object_list.filter(
+                    fechaCreacion__lte=self.form.cleaned_data['fecha_pago_fin'])
+
+            if not self.form.cleaned_data['fecha_concilia_inicio'] is None:
+                self.object_list = self.object_list.filter(
+                    fechaModificacion__gte=self.form.cleaned_data['fecha_concilia_inicio'])
+
+            if not self.form.cleaned_data['fecha_concilia_fin'] is None:
+                self.object_list = self.object_list.filter(
+                    fechaModificacion__lte=self.form.cleaned_data['fecha_concilia_fin'])
+
+            if (idRol != 'CDA' and idRol != 'ADMIN'):
+                self.object_list = self.object_list.filter(empresa__id=idEmp)
 
             new_context = self.get_context_data(object_list=self.object_list, form=self.form)
             return self.render_to_response(new_context)
         else:
-            self.form = BuscarConveniosForm(self.request.POST or None)
-
-            if self.form.is_valid():
-                idEmp = EmpresaUsuario.objects.filter(usuario=self.request.user).values_list(
-                    'empresa__id', flat=True).first()
-                idRol = Group.objects.filter(user=self.request.user).values_list('name', flat=True).first()
-
-                if (idRol == 'CDA' or idRol == 'ADMIN'):
-                    self.object_list = Conveniocda.objects.filter(estado_id=4)
-                else:
-                    self.object_list = Conveniocda.objects.filter(estado_id=4, empresa__id=idEmp)
-
-                self.object_list = self.object_list.filter(Q(nombre__icontains=self.form.cleaned_data['nombre']) | Q(
-                                                           apellido__icontains=self.form.cleaned_data['nombre']),
-                                                           documento__icontains=self.form.cleaned_data['documento'],
-                                                           placa__icontains=self.form.cleaned_data['placa'])
-
-                if not self.form.cleaned_data['empresa'] is None:
-                    self.object_list = self.object_list.filter(empresa = self.form.cleaned_data['empresa'])
-
-                if not self.form.cleaned_data['fecha_inicio'] is None:
-                    self.object_list = self.object_list.filter(
-                        fechaCreacion__gte=self.form.cleaned_data['fecha_inicio'])
-
-                if not self.form.cleaned_data['fecha_fin'] is None:
-                    self.object_list = self.object_list.filter(fechaCreacion__lte=self.form.cleaned_data['fecha_fin'])
-
-                if not self.form.cleaned_data['fecha_mod_inicio'] is None:
-                    self.object_list = self.object_list.filter(
-                        fechaModificacion__gte=self.form.cleaned_data['fecha_mod_inicio'])
-
-                if not self.form.cleaned_data['fecha_mod_fin'] is None:
-                    self.object_list = self.object_list.filter(
-                        fechaModificacion__lte=self.form.cleaned_data['fecha_mod_fin'])
-
-                if not self.form.cleaned_data['fecha_pago_inicio'] is None:
-                    self.object_list = self.object_list.filter(
-                        fechaCreacion__gte=self.form.cleaned_data['fecha_pago_inicio'])
-
-                if not self.form.cleaned_data['fecha_pago_fin'] is None:
-                    self.object_list = self.object_list.filter(
-                        fechaCreacion__lte=self.form.cleaned_data['fecha_pago_fin'])
-
-                if not self.form.cleaned_data['fecha_concilia_inicio'] is None:
-                    self.object_list = self.object_list.filter(
-                        fechaModificacion__gte=self.form.cleaned_data['fecha_concilia_inicio'])
-
-                if not self.form.cleaned_data['fecha_concilia_fin'] is None:
-                    self.object_list = self.object_list.filter(
-                        fechaModificacion__lte=self.form.cleaned_data['fecha_concilia_fin'])
-
-                if (idRol != 'CDA' and idRol != 'ADMIN'):
-                    self.object_list = self.object_list.filter(empresa__id=idEmp)
-
-                new_context = self.get_context_data(object_list=self.object_list, form=self.form)
-                return self.render_to_response(new_context)
-            else:
-                new_context = self.get_context_data(object_list=self.object_list, form=self.form)
-                return self.render_to_response(new_context)
+            new_context = self.get_context_data(object_list=self.object_list, form=self.form)
+            return self.render_to_response(new_context)
 
 class ConvenioPendiente(LoginRequiredMixin, ListView, FormMixin):
     model = Conveniocda
@@ -362,7 +424,12 @@ class ConvenioPendiente(LoginRequiredMixin, ListView, FormMixin):
     form = BuscarConveniosForm
     paginate_by = 10
 
-    def get_queryset(self):
+    def dispatch(self, request, *args, **kwargs):
+        if int(self.request.session.get('paginate', 0)) == 0:
+            self.request.session['paginate'] = 10
+        return super().dispatch(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
         self.paginate_by = self.request.session['paginate']
         self.form = BuscarConveniosForm(self.request.GET or None, )
 
@@ -371,96 +438,142 @@ class ConvenioPendiente(LoginRequiredMixin, ListView, FormMixin):
 
         idRol = Group.objects.filter(user=self.request.user).values_list('name', flat=True).first()
 
-        filter_val = self.request.GET.get('filter', 'give-default-value')
-
         if (idRol == 'CDA' or idRol == 'ADMIN'):
-            new_context = Conveniocda.objects.filter(estado_id = 1)
+            self.object_list = Conveniocda.objects.filter(nombre__icontains='', estado_id=1).order_by('-id')
         else:
-            new_context = Conveniocda.objects.filter(estado_id = 1, empresa__id=idEmp)
+            self.object_list = Conveniocda.objects.filter(nombre__icontains='', estado_id=1, empresa__id=idEmp).order_by('-id')
 
-        return new_context
+        if not self.request.GET.get('nombre') is None:
+            self.object_list = self.object_list.filter(nombre__icontains=self.request.GET.get('nombre'))
 
-    def dispatch(self, request, *args, **kwargs):
-        if int(self.request.session.get('paginate', 0)) == 0:
-            self.request.session['paginate'] = 10
-        return super().dispatch(request, *args, **kwargs)
+        if not self.request.GET.get('documento') is None:
+            self.object_list = self.object_list.filter(documento__icontains=self.request.GET.get('documento'))
+
+        if not self.request.GET.get('placa') is None:
+            self.object_list = self.object_list.filter(placa__icontains=self.request.GET.get('placa'))
+
+        if not self.request.GET.get('empresa') is None:
+            self.object_list = self.object_list.filter(empresa=self.request.GET.get('empresa'))
+
+
+        if not self.request.GET.get('fecha_inicio') is None:
+            temp_date = datetime.strptime(self.request.GET.get('fecha_inicio'), "%m/%d/%Y").date()
+            self.form.fecha_inicio = temp_date
+            self.object_list = self.object_list.filter(
+                fechaCreacion__gte=self.form.fecha_inicio)
+
+        if not self.request.GET.get('fecha_fin') is None:
+            temp_date = datetime.strptime(self.request.GET.get('fecha_fin'), "%m/%d/%Y").date()
+            self.form.fecha_fin = temp_date
+            self.object_list = self.object_list.filter(
+                fechaCreacion__lte=self.form.fecha_fin)
+
+        if not self.request.GET.get('fecha_mod_inicio') is None:
+            temp_date = datetime.strptime(self.request.GET.get('fecha_mod_inicio'), "%m/%d/%Y").date()
+            self.form.fecha_mod_inicio = temp_date
+            self.object_list = self.object_list.filter(
+                fechaCreacion__gte=self.form.fecha_mod_inicio)
+
+        if not self.request.GET.get('fecha_mod_fin') is None:
+            temp_date = datetime.strptime(self.request.GET.get('fecha_mod_fin'), "%m/%d/%Y").date()
+            self.form.fecha_mod_fin = temp_date
+            self.object_list = self.object_list.filter(
+                fechaCreacion__lte=self.form.fecha_mod_fin)
+
+        if not self.request.GET.get('fecha_pago_inicio') is None:
+            temp_date = datetime.strptime(self.request.GET.get('fecha_pago_inicio'), "%m/%d/%Y").date()
+            self.form.fecha_pago_inicio = temp_date
+            self.object_list = self.object_list.filter(
+                fechaCreacion__gte=self.form.fecha_pago_inicio)
+
+        if not self.request.GET.get('fecha_pago_fin') is None:
+            temp_date = datetime.strptime(self.request.GET.get('fecha_pago_fin'), "%m/%d/%Y").date()
+            self.form.fecha_pago_fin = temp_date
+            self.object_list = self.object_list.filter(
+                fechaCreacion__lte=self.form.fecha_pago_fin)
+
+        if not self.request.GET.get('fecha_concilia_inicio') is None:
+            temp_date = datetime.strptime(self.request.GET.get('fecha_concilia_inicio'), "%m/%d/%Y").date()
+            self.form.fecha_concilia_inicio = temp_date
+            self.object_list = self.object_list.filter(
+                fechaCreacion__gte=self.form.fecha_concilia_inicio)
+
+        if not self.request.GET.get('fecha_concilia_fin') is None:
+            temp_date = datetime.strptime(self.request.GET.get('fecha_concilia_fin'), "%m/%d/%Y").date()
+            self.form.fecha_concilia_fin = temp_date
+            self.object_list = self.object_list.filter(
+                fechaCreacion__lte=self.form.fecha_concilia_fin)
+
+        new_context = self.get_context_data(object_list=self.object_list, form=self.form)
+        return self.render_to_response(new_context)
 
     def post(self, request, *args, **kwargs):
-        if int(self.request.POST.get('paginate', 0)) > 0:
-            self.request.session['paginate'] = self.request.POST.get('paginate')
-            self.paginate_by = self.request.session['paginate']
+        self.request.session['paginate'] = self.request.POST.get('paginate')
+        self.paginate_by = self.request.session['paginate']
+        self.form = BuscarConveniosForm(self.request.POST or None)
 
+        if self.form.is_valid():
             idEmp = EmpresaUsuario.objects.filter(usuario=self.request.user).values_list(
                 'empresa__id', flat=True).first()
             idRol = Group.objects.filter(user=self.request.user).values_list('name', flat=True).first()
 
+            #if (idRol == 'CDA' or idRol == 'ADMIN'):
+            #    self.object_list = Conveniocda.objects.filter(estado_id=1)
+            #else:
+            #    self.object_list = Conveniocda.objects.filter(estado_id=1, empresa__id=idEmp)
+
             if (idRol == 'CDA' or idRol == 'ADMIN'):
-                self.object_list = Conveniocda.objects.filter(estado_id=1)
+                self.object_list = self.get_queryset().filter(estado_id=1).order_by('-id')
             else:
-                self.object_list = Conveniocda.objects.filter(estado_id=1, empresa__id=idEmp)
+                self.object_list = self.get_queryset().filter(empresa__id=idEmp, estado_id=1).order_by('-id')
+
+            self.object_list = self.object_list.filter(Q(nombre__icontains=self.form.cleaned_data['nombre']) | Q(
+                                                          apellido__icontains=self.form.cleaned_data['nombre']),
+                                                          documento__icontains=self.form.cleaned_data['documento'],
+                                                          placa__icontains=self.form.cleaned_data['placa'])
+
+            if not self.form.cleaned_data['empresa'] is None:
+                self.object_list = self.object_list.filter(empresa = self.form.cleaned_data['empresa'])
+
+            if not self.form.cleaned_data['fecha_inicio'] is None:
+                self.object_list = self.object_list.filter(
+                    fechaCreacion__gte=self.form.cleaned_data['fecha_inicio'])
+
+            if not self.form.cleaned_data['fecha_fin'] is None:
+                self.object_list = self.object_list.filter(fechaCreacion__lte=self.form.cleaned_data['fecha_fin'])
+
+            if not self.form.cleaned_data['fecha_mod_inicio'] is None:
+                self.object_list = self.object_list.filter(
+                    fechaModificacion__gte=self.form.cleaned_data['fecha_mod_inicio'])
+
+            if not self.form.cleaned_data['fecha_mod_fin'] is None:
+                self.object_list = self.object_list.filter(
+                    fechaModificacion__lte=self.form.cleaned_data['fecha_mod_fin'])
+
+            if not self.form.cleaned_data['fecha_pago_inicio'] is None:
+                self.object_list = self.object_list.filter(
+                    fechaCreacion__gte=self.form.cleaned_data['fecha_pago_inicio'])
+
+            if not self.form.cleaned_data['fecha_pago_fin'] is None:
+                self.object_list = self.object_list.filter(
+                    fechaCreacion__lte=self.form.cleaned_data['fecha_pago_fin'])
+
+            if not self.form.cleaned_data['fecha_concilia_inicio'] is None:
+                self.object_list = self.object_list.filter(
+                    fechaModificacion__gte=self.form.cleaned_data['fecha_concilia_inicio'])
+
+            if not self.form.cleaned_data['fecha_concilia_fin'] is None:
+                self.object_list = self.object_list.filter(
+                    fechaModificacion__lte=self.form.cleaned_data['fecha_concilia_fin'])
+
+            if (idRol != 'CDA' and idRol != 'ADMIN'):
+                self.object_list = self.object_list.filter(empresa__id=idEmp)
 
             new_context = self.get_context_data(object_list=self.object_list, form=self.form)
             return self.render_to_response(new_context)
         else:
-            self.form = BuscarConveniosForm(self.request.POST or None)
-
-            if self.form.is_valid():
-                idEmp = EmpresaUsuario.objects.filter(usuario=self.request.user).values_list(
-                    'empresa__id', flat=True).first()
-                idRol = Group.objects.filter(user=self.request.user).values_list('name', flat=True).first()
-
-                if (idRol == 'CDA' or idRol == 'ADMIN'):
-                    self.object_list = Conveniocda.objects.filter(estado_id=1)
-                else:
-                    self.object_list = Conveniocda.objects.filter(estado_id=1, empresa__id=idEmp)
-
-                self.object_list = self.object_list.filter(Q(nombre__icontains=self.form.cleaned_data['nombre']) | Q(
-                                                              apellido__icontains=self.form.cleaned_data['nombre']),
-                                                              documento__icontains=self.form.cleaned_data['documento'],
-                                                              placa__icontains=self.form.cleaned_data['placa'])
-
-                if not self.form.cleaned_data['empresa'] is None:
-                    self.object_list = self.object_list.filter(empresa = self.form.cleaned_data['empresa'])
-
-                if not self.form.cleaned_data['fecha_inicio'] is None:
-                    self.object_list = self.object_list.filter(
-                        fechaCreacion__gte=self.form.cleaned_data['fecha_inicio'])
-
-                if not self.form.cleaned_data['fecha_fin'] is None:
-                    self.object_list = self.object_list.filter(fechaCreacion__lte=self.form.cleaned_data['fecha_fin'])
-
-                if not self.form.cleaned_data['fecha_mod_inicio'] is None:
-                    self.object_list = self.object_list.filter(
-                        fechaModificacion__gte=self.form.cleaned_data['fecha_mod_inicio'])
-
-                if not self.form.cleaned_data['fecha_mod_fin'] is None:
-                    self.object_list = self.object_list.filter(
-                        fechaModificacion__lte=self.form.cleaned_data['fecha_mod_fin'])
-
-                if not self.form.cleaned_data['fecha_pago_inicio'] is None:
-                    self.object_list = self.object_list.filter(
-                        fechaCreacion__gte=self.form.cleaned_data['fecha_pago_inicio'])
-
-                if not self.form.cleaned_data['fecha_pago_fin'] is None:
-                    self.object_list = self.object_list.filter(
-                        fechaCreacion__lte=self.form.cleaned_data['fecha_pago_fin'])
-
-                if not self.form.cleaned_data['fecha_concilia_inicio'] is None:
-                    self.object_list = self.object_list.filter(
-                        fechaModificacion__gte=self.form.cleaned_data['fecha_concilia_inicio'])
-
-                if not self.form.cleaned_data['fecha_concilia_fin'] is None:
-                    self.object_list = self.object_list.filter(
-                        fechaModificacion__lte=self.form.cleaned_data['fecha_concilia_fin'])
-
-                if (idRol != 'CDA' and idRol != 'ADMIN'):
-                    self.object_list = self.object_list.filter(empresa__id=idEmp)
-
-                new_context = self.get_context_data(object_list=self.object_list, form=self.form)
-                return self.render_to_response(new_context)
-            else:
-                new_context = self.get_context_data(object_list=self.object_list, form=self.form)
-                return self.render_to_response(new_context)
+            new_context = self.get_context_data(object_list=self.object_list, form=self.form)
+            return self.render_to_response(new_context)
 
 class ConvenioCrear(LoginRequiredMixin, SuccessMessageMixin, CreateView):
     model = Conveniocda
@@ -492,7 +605,7 @@ class ConvenioCrear(LoginRequiredMixin, SuccessMessageMixin, CreateView):
         #    'Message.',
         #    'from@example.com',
         #    ['john@example.com', 'jane@example.com'],
-        #    fail_silently=False
+        #    fail_sidtly=False
         #)
 
         return super().form_valid(form)
@@ -585,3 +698,168 @@ class TiposdocumentosViewSet(viewsets.ModelViewSet):
     queryset = TiposDocumento.objects.all()
     serializer_class = TiposdocumentoSerializers
     #permission_classes = [permissions.IsAuthenticated]
+
+
+def listresults(request, format_exp=None):
+    export = []
+    # Se agregan los encabezados de las columnas
+    export.append([
+        'Nombre',
+        'placa',
+        'documento',
+    ])
+    # Se obtienen los datos de la tabla o model y se agregan al array
+    results = Conveniocda.objects.all()
+    for result in results:
+        # ejemplo para dar formato a fechas, estados (si/no, ok/fail) o
+        # acceder a campos con relaciones y no solo al id
+        export.append([
+                #"{0:%Y-%m-%d %H:%M}".format(result.date),
+                result.nombre,
+                result.placa,
+                result.documento,
+                ])
+
+    # Obtenemos la fecha para agregarla al nombre del archivo
+    today    = datetime.now()
+    strToday = today.strftime("%Y%m%d")
+
+    # se transforma el array a una hoja de calculo en memoria
+    sheet = excel.pe.Sheet(export)
+
+    # se devuelve como "Response" el archivo para que se pueda "guardar"
+    # en el navegador, es decir como hacer un "Download"
+    if format_exp == "csv":
+        return excel.make_response(sheet, "csv", file_name="results-"+strToday+".csv")
+    elif format_exp == "ods":
+        return excel.make_response(sheet, "ods", file_name="results-"+strToday+".ods")
+    elif format_exp == "xlsx":
+        return excel.make_response(sheet, "xlsx", file_name="results-"+strToday+".xlsx")
+    else:
+        messages.error(request, 'Export format {} not supported'.format(format_exp))
+
+
+class ExportList(LoginRequiredMixin, ListView, FormMixin):
+    model = Conveniocda
+    context_object_name = 'convenio'
+    form_class = BuscarConveniosForm
+    form = BuscarConveniosForm
+
+    def get(self, request, *args, **kwargs):
+        export = []
+        export.append([
+            'Nombre',
+            'Documento',
+            'Telefono',
+            'Placa',
+            'Valor',
+            'Empresa',
+            'Vehiculo',
+            'Estado',
+            'Fecha Creacion',
+            'Fecha Modificacion',
+            'Fecha Pago',
+            'Fecha Conciliacion'
+        ])
+        # Se obtienen los datos de la tabla o model y se agregan al array
+        #results = Conveniocda.objects.all()
+
+        idEmp = EmpresaUsuario.objects.filter(usuario=self.request.user).values_list(
+            'empresa__id', flat=True).first()
+
+        idRol = Group.objects.filter(user=self.request.user).values_list('name', flat=True).first()
+
+        if (self.request.GET.get('tipo') == 'admin'):
+            self.object_list = Conveniocda.objects.filter(nombre__icontains='').order_by('-id')
+        else:
+            if (self.request.GET.get('tipo') == 'revisado'):
+                self.object_list = Conveniocda.objects.filter(nombre__icontains='', estado_id=4).order_by('-id')
+            else:
+                self.object_list = Conveniocda.objects.filter(nombre__icontains='', estado_id=1).order_by('-id')
+
+        if (idRol != 'CDA' and idRol != 'ADMIN'):
+            self.object_list = self.object_list.filter(empresa__id=idEmp)
+
+        if not self.request.GET.get('nombre') is None:
+            self.object_list = self.object_list.filter(nombre__icontains=self.request.GET.get('nombre'))
+
+        if not self.request.GET.get('documento') is None:
+            self.object_list = self.object_list.filter(documento__icontains=self.request.GET.get('documento'))
+
+        if not self.request.GET.get('placa') is None:
+            self.object_list = self.object_list.filter(placa__icontains=self.request.GET.get('placa'))
+
+        if not self.request.GET.get('empresa') is None:
+            self.object_list = self.object_list.filter(empresa=self.request.GET.get('empresa'))
+
+        if not self.request.GET.get('fecha_inicio') is None:
+            temp_date = datetime.strptime(self.request.GET.get('fecha_inicio'), "%m/%d/%Y").date()
+            self.form.fecha_inicio = temp_date
+            self.object_list = self.object_list.filter(
+                fechaCreacion__gte=self.form.fecha_inicio)
+
+        if not self.request.GET.get('fecha_fin') is None:
+            temp_date = datetime.strptime(self.request.GET.get('fecha_fin'), "%m/%d/%Y").date()
+            self.form.fecha_fin = temp_date
+            self.object_list = self.object_list.filter(
+                fechaCreacion__lte=self.form.fecha_fin)
+
+        if not self.request.GET.get('fecha_mod_inicio') is None:
+            temp_date = datetime.strptime(self.request.GET.get('fecha_mod_inicio'), "%m/%d/%Y").date()
+            self.form.fecha_mod_inicio = temp_date
+            self.object_list = self.object_list.filter(
+                fechaCreacion__gte=self.form.fecha_mod_inicio)
+
+        if not self.request.GET.get('fecha_mod_fin') is None:
+            temp_date = datetime.strptime(self.request.GET.get('fecha_mod_fin'), "%m/%d/%Y").date()
+            self.form.fecha_mod_fin = temp_date
+            self.object_list = self.object_list.filter(
+                fechaCreacion__lte=self.form.fecha_mod_fin)
+
+        if not self.request.GET.get('fecha_pago_inicio') is None:
+            temp_date = datetime.strptime(self.request.GET.get('fecha_pago_inicio'), "%m/%d/%Y").date()
+            self.form.fecha_pago_inicio = temp_date
+            self.object_list = self.object_list.filter(
+                fechaCreacion__gte=self.form.fecha_pago_inicio)
+
+        if not self.request.GET.get('fecha_pago_fin') is None:
+            temp_date = datetime.strptime(self.request.GET.get('fecha_pago_fin'), "%m/%d/%Y").date()
+            self.form.fecha_pago_fin = temp_date
+            self.object_list = self.object_list.filter(
+                fechaCreacion__lte=self.form.fecha_pago_fin)
+
+        if not self.request.GET.get('fecha_concilia_inicio') is None:
+            temp_date = datetime.strptime(self.request.GET.get('fecha_concilia_inicio'), "%m/%d/%Y").date()
+            self.form.fecha_concilia_inicio = temp_date
+            self.object_list = self.object_list.filter(
+                fechaCreacion__gte=self.form.fecha_concilia_inicio)
+
+        if not self.request.GET.get('fecha_concilia_fin') is None:
+            temp_date = datetime.strptime(self.request.GET.get('fecha_concilia_fin'), "%m/%d/%Y").date()
+            self.form.fecha_concilia_fin = temp_date
+            self.object_list = self.object_list.filter(
+                fechaCreacion__lte=self.form.fecha_concilia_fin)
+
+        results = self.object_list
+
+        for result in results:
+            export.append([
+                result.nombre,
+                result.documento,
+                result.telefono,
+                result.placa,
+                result.valor,
+                result.empresa.nombre,
+                result.tipovehiculo.nombre,
+                result.estado.nombre,
+                "{0:%Y-%m-%d %H:%M}".format(result.fechaCreacion) if not result.fechaCreacion is None else '',
+                "{0:%Y-%m-%d %H:%M}".format(result.fechaModificacion) if not result.fechaModificacion is None else '',
+                "{0:%Y-%m-%d %H:%M}".format(result.fechaPago) if not result.fechaPago is None else '',
+                "{0:%Y-%m-%d %H:%M}".format(result.fechaConciliacion) if not result.fechaConciliacion is None else ''
+            ])
+
+        today = datetime.now()
+        strToday = today.strftime("%Y%m%d")
+
+        sheet = excel.pe.Sheet(export)
+        return excel.make_response(sheet, "xlsx", file_name="results-" + strToday + ".xlsx")

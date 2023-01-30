@@ -178,3 +178,31 @@ class ConveniosForm(ModelForm):
     class Meta:
         model = Conveniocda
         fields =['nombre', 'apellido','fechaModificacion', 'placa', 'documento']
+
+class Document(models.Model):
+    docfile = models.FileField(upload_to='documents/%Y/%m/%d')
+
+
+class Revisionconveniocda(models.Model):
+    id = models.AutoField(primary_key=True)
+    convenio = models.ForeignKey(Conveniocda, default=1, on_delete=models.CASCADE)
+    estado = models.ForeignKey(Estados, default=1, on_delete=models.CASCADE)
+    placa = models.CharField(max_length=100, null=False)
+    valor = models.CharField(max_length=200, default='$ ')
+    observaciones = models.CharField(max_length=500)
+    fechaCreacion = models.DateTimeField(auto_now_add=True)
+    fechaModificacion = models.DateTimeField(auto_now_add=False)
+    creador = models.ForeignKey(settings.AUTH_USER_MODEL, default=1, on_delete=models.CASCADE)
+
+    def save(self, *args, **kwargs):
+        ''' On save, update timestamps '''
+        if not self.id:
+            self.fechaCreacion = timezone.now()
+        self.fechaModificacion = timezone.now()
+        return super(Revisionconveniocda, self).save(*args, **kwargs)
+
+    def __srt__(self):
+        return self.id
+
+    class Meta:
+        db_table = 'revisionconveniocda'

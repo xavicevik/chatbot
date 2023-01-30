@@ -14,7 +14,7 @@ Including another URLconf
 """
 from django.http import HttpResponseRedirect
 
-from gestion.views import ReferidosListado, ReferidoDetalle, ReferitosCrear, ReferitoEliminar, ReferidoActualizar, \
+from gestion.views import ExportList, ReferidosListado, ReferidoDetalle, ReferitosCrear, ReferitoEliminar, ReferidoActualizar, \
     ConvenioListado, ConvenioDetalle, ConvenioCrear, ConvenioEliminar, ConvenioActualizar, ConvenioPendiente, ConvenioRevisar, ConvenioRevisados
 
 from django.conf import settings
@@ -32,7 +32,6 @@ router.register(r'grupos', views.GroupViewSet)
 router.register(r'convenios', views.ConveniosViewSet)
 router.register(r'empresas', views.EmpresasViewSet)
 router.register(r'tiposdocumento', views.TiposdocumentosViewSet)
-
 
 urlpatterns = [
     path('api/', include(router.urls)),
@@ -57,6 +56,7 @@ urlpatterns = [
     # La ruta 'eliminar' que usaremos para eliminar un postre o registro de la Base de Datos
     path('referidos/eliminar/<int:pk>', ReferitoEliminar.as_view(), name='eliminar'),
 
+    # convenios CDA
     path('conveniocda/', ConvenioListado.as_view(template_name="conveniocda/index.html"), name='leer'),
     # La ruta 'detalles' en donde mostraremos una página con los detalles de un postre o registro
     path('conveniocda/detalle/<int:pk>', ConvenioDetalle.as_view(template_name="conveniocda/detalles.html"), name='detalles'),
@@ -75,8 +75,14 @@ urlpatterns = [
          name='detallespendiente'),
     path('conveniopendientes/revisar/<int:pk>', ConvenioRevisar.as_view(template_name="conveniopendientes/revisar.html"),
          name='revisar'),
-    path('api-auth/', include('rest_framework.urls', namespace='rest_framework'))
+    path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
+
+    path('results/', views.listresults, name='results'),
+    path('results/export/<str:format_exp>', views.listresults, name='select.export'),
+    path('resultexport/', ExportList.as_view(), name='resultexport'),
+
 ]
+
 # Add Django Debug Toolbar
 if settings.DEBUG:
     import debug_toolbar

@@ -155,6 +155,9 @@ ST_FILES = os.environ.get('ST_FILES', os.path.join(BASE_DIR, 'staticfiles'))
 #STATIC_ROOT = '/home/django/chatbot/staticfiles/'
 STATIC_ROOT = ST_FILES
 
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_URL = '/media/'
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field

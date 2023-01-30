@@ -66,7 +66,7 @@
                             </div>
                         </div>
                         <button type="submit" class="btn btn-primary btn-sm">Buscar</button>
-                    </form>
+                    <!--</form>-->
 
                 </div>
             <div class="col-md-12">
@@ -84,8 +84,11 @@
 
                 <div align="left" class="btn_crear mb-3">
                   <a href="crear" type="button" class="btn btn-primary btn-sm">Crear convenio</a>
+                  <a href="{% url 'resultexport' %}?format_exp=csv&tipo=admin'{% if form.empresa.value %}&empresa={{ form.empresa.value }}{% endif %}{% if form.nombre.value %}&nombre={{ form.nombre.value }}{% endif %}{% if form.documento.value %}&documento={{ form.documento.value }}{% endif %}{% if form.placa.value %}&placa={{ form.placa.value }}{% endif %}{% if form.fecha_inicio.value %}&fecha_inicio={{ form.fecha_inicio.value }}{% endif %}{% if form.fecha_fin.value %}&fecha_fin={{ form.fecha_fin.value }}{% endif %}{% if form.fecha_mod_inicio.value %}&fecha_mod_inicio={{ form.fecha_mod_inicio.value }}{% endif %}{% if form.fecha_mod_fin.value %}&fecha_mod_fin={{ form.fecha_mod_fin.value }}{% endif %}{% if form.fecha_pago_inicio.value %}&fecha_pago_inicio={{ form.fecha_pago_inicio.value }}{% endif %}{% if form.fecha_pago_fin.value %}&fecha_pago_fin={{ form.fecha_pago_fin.value }}{% endif %}{% if form.fecha_concilia_inicio.value %}&fecha_concilia_inicio={{ form.fecha_concilia_inicio.value }}{% endif %}{% if form.fecha_concilia_fin.value %}&fecha_concilia_fin={{ form.fecha_concilia_fin.value }}{% endif %}" type="button" class="btn btn-primary btn-sm">Exportar CSV</a>
+                  <a href="{% url 'resultexport' %}?format_exp=xls&tipo=admin{% if form.empresa.value %}&empresa={{ form.empresa.value }}{% endif %}{% if form.nombre.value %}&nombre={{ form.nombre.value }}{% endif %}{% if form.documento.value %}&documento={{ form.documento.value }}{% endif %}{% if form.placa.value %}&placa={{ form.placa.value }}{% endif %}{% if form.fecha_inicio.value %}&fecha_inicio={{ form.fecha_inicio.value }}{% endif %}{% if form.fecha_fin.value %}&fecha_fin={{ form.fecha_fin.value }}{% endif %}{% if form.fecha_mod_inicio.value %}&fecha_mod_inicio={{ form.fecha_mod_inicio.value }}{% endif %}{% if form.fecha_mod_fin.value %}&fecha_mod_fin={{ form.fecha_mod_fin.value }}{% endif %}{% if form.fecha_pago_inicio.value %}&fecha_pago_inicio={{ form.fecha_pago_inicio.value }}{% endif %}{% if form.fecha_pago_fin.value %}&fecha_pago_fin={{ form.fecha_pago_fin.value }}{% endif %}{% if form.fecha_concilia_inicio.value %}&fecha_concilia_inicio={{ form.fecha_concilia_inicio.value }}{% endif %}{% if form.fecha_concilia_fin.value %}&fecha_concilia_fin={{ form.fecha_concilia_fin.value }}{% endif %}" type="button" class="btn btn-primary btn-sm">Exportar XLSX</a>
                 </div>
-              <form method="POST" action="{% url 'leer' %}">
+
+             <!-- <form method="POST" action="{% url 'leer' %}"> -->
                   {% csrf_token %}
                 <div align="right" class="mb-3 flex-column">
                    <label>Mostrar:</label>
@@ -94,6 +97,8 @@
                           <option {% if request.session.paginate == '10' %} selected {% endif %}>10</option>
                           <option {% if request.session.paginate == '20' %} selected {% endif %}>20</option>
                           <option {% if request.session.paginate == '50' %} selected {% endif %}>50</option>
+                          <option {% if request.session.paginate == '100' %} selected {% endif %}>100</option>
+                          <option {% if request.session.paginate == '200' %} selected {% endif %}>200</option>
                       </select>
                 </div>
               </form>
@@ -152,7 +157,7 @@
               <nav>
                   <ul class="pagination justify-content-center">
                     {% if page_obj.has_previous %}
-                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Atras</a></li>
+                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if form.empresa.value %}&empresa={{ form.empresa.value }}{% endif %}{% if form.nombre.value %}&nombre={{ form.nombre.value }}{% endif %}{% if form.documento.value %}&documento={{ form.documento.value }}{% endif %}{% if form.placa.value %}&placa={{ form.placa.value }}{% endif %}{% if form.fecha_inicio.value %}&fecha_inicio={{ form.fecha_inicio.value }}{% endif %}{% if form.fecha_fin.value %}&fecha_fin={{ form.fecha_fin.value }}{% endif %}{% if form.fecha_mod_inicio.value %}&fecha_mod_inicio={{ form.fecha_mod_inicio.value }}{% endif %}{% if form.fecha_mod_fin.value %}&fecha_mod_fin={{ form.fecha_mod_fin.value }}{% endif %}{% if form.fecha_pago_inicio.value %}&fecha_pago_inicio={{ form.fecha_pago_inicio.value }}{% endif %}{% if form.fecha_pago_fin.value %}&fecha_pago_fin={{ form.fecha_pago_fin.value }}{% endif %}{% if form.fecha_concilia_inicio.value %}&fecha_concilia_inicio={{ form.fecha_concilia_inicio.value }}{% endif %}{% if form.fecha_concilia_fin.value %}&fecha_concilia_fin={{ form.fecha_concilia_fin.value }}{% endif %}">Atras</a></li>
                         {% else %}
                         <li class="page-item disabled"><a class="page-link" href="">Atras</a></li>
                     {% endif %}
@@ -160,15 +165,15 @@
                   {% for i in "x"|rjust:page_obj.paginator.num_pages|make_list %}
 
                   {% if page_obj.number == forloop.counter %}
-                        <li class="page-item active"><a class="page-link" href="?page={{ forloop.counter }}">{{ forloop.counter }}</a></li>
+                        <li class="page-item active"><a class="page-link" href="?page={{ forloop.counter }}{% if form.empresa.value %}&empresa={{ form.empresa.value }}{% endif %}{% if form.nombre.value %}&nombre={{ form.nombre.value }}{% endif %}{% if form.documento.value %}&documento={{ form.documento.value }}{% endif %}{% if form.placa.value %}&placa={{ form.placa.value }}{% endif %}{% if form.fecha_inicio.value %}&fecha_inicio={{ form.fecha_inicio.value }}{% endif %}{% if form.fecha_fin.value %}&fecha_fin={{ form.fecha_fin.value }}{% endif %}{% if form.fecha_mod_inicio.value %}&fecha_mod_inicio={{ form.fecha_mod_inicio.value }}{% endif %}{% if form.fecha_mod_fin.value %}&fecha_mod_fin={{ form.fecha_mod_fin.value }}{% endif %}{% if form.fecha_pago_inicio.value %}&fecha_pago_inicio={{ form.fecha_pago_inicio.value }}{% endif %}{% if form.fecha_pago_fin.value %}&fecha_pago_fin={{ form.fecha_pago_fin.value }}{% endif %}{% if form.fecha_concilia_inicio.value %}&fecha_concilia_inicio={{ form.fecha_concilia_inicio.value }}{% endif %}{% if form.fecha_concilia_fin.value %}&fecha_concilia_fin={{ form.fecha_concilia_fin.value }}{% endif %}">{{ forloop.counter }}</a></li>
                           {% else %}
-                          <li class="page-item"><a class="page-link" href="?page={{ forloop.counter }}">{{ forloop.counter }}</a></li>
+                          <li class="page-item"><a class="page-link" href="?page={{ forloop.counter }}{% if form.empresa.value %}&empresa={{ form.empresa.value }}{% endif %}{% if form.nombre.value %}&nombre={{ form.nombre.value }}{% endif %}{% if form.documento.value %}&documento={{ form.documento.value }}{% endif %}{% if form.placa.value %}&placa={{ form.placa.value }}{% endif %}{% if form.fecha_inicio.value %}&fecha_inicio={{ form.fecha_inicio.value }}{% endif %}{% if form.fecha_fin.value %}&fecha_fin={{ form.fecha_fin.value }}{% endif %}{% if form.fecha_mod_inicio.value %}&fecha_mod_inicio={{ form.fecha_mod_inicio.value }}{% endif %}{% if form.fecha_mod_fin.value %}&fecha_mod_fin={{ form.fecha_mod_fin.value }}{% endif %}{% if form.fecha_pago_inicio.value %}&fecha_pago_inicio={{ form.fecha_pago_inicio.value }}{% endif %}{% if form.fecha_pago_fin.value %}&fecha_pago_fin={{ form.fecha_pago_fin.value }}{% endif %}{% if form.fecha_concilia_inicio.value %}&fecha_concilia_inicio={{ form.fecha_concilia_inicio.value }}{% endif %}{% if form.fecha_concilia_fin.value %}&fecha_concilia_fin={{ form.fecha_concilia_fin.value }}{% endif %}">{{ forloop.counter }}</a></li>
 
                       {% endif %}
                     {% endfor %}
 
                   {% if page_obj.has_next %}
-                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Siguiente</a></li>
+                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% if form.empresa.value %}&empresa={{ form.empresa.value }}{% endif %}{% if form.nombre.value %}&nombre={{ form.nombre.value }}{% endif %}{% if form.documento.value %}&documento={{ form.documento.value }}{% endif %}{% if form.placa.value %}&placa={{ form.placa.value }}{% endif %}{% if form.fecha_inicio.value %}&fecha_inicio={{ form.fecha_inicio.value }}{% endif %}{% if form.fecha_fin.value %}&fecha_fin={{ form.fecha_fin.value }}{% endif %}{% if form.fecha_mod_inicio.value %}&fecha_mod_inicio={{ form.fecha_mod_inicio.value }}{% endif %}{% if form.fecha_mod_fin.value %}&fecha_mod_fin={{ form.fecha_mod_fin.value }}{% endif %}{% if form.fecha_pago_inicio.value %}&fecha_pago_inicio={{ form.fecha_pago_inicio.value }}{% endif %}{% if form.fecha_pago_fin.value %}&fecha_pago_fin={{ form.fecha_pago_fin.value }}{% endif %}{% if form.fecha_concilia_inicio.value %}&fecha_concilia_inicio={{ form.fecha_concilia_inicio.value }}{% endif %}{% if form.fecha_concilia_fin.value %}&fecha_concilia_fin={{ form.fecha_concilia_fin.value }}{% endif %}">Siguiente</a></li>
                       {% else %}
                         <li class="page-item disabled"><a class="page-link" href="">Siguiente</a></li>
                     {% endif %}
